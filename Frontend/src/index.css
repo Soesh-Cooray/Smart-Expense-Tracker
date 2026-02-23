@@ -410,12 +410,12 @@ body {
   padding-top: 36px;
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  gap: 30px;
+  gap: 20px;
 }
 
 .footer-brand p {
   color: #6b7280;
-  max-width: 320px;
+  max-width: 1200px;
   line-height: 1.8;
   margin-top: 12px;
 }

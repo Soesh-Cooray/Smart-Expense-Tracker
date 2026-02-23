@@ -6,15 +6,8 @@ function Index() {
       <header className="topbar">
         <div className="brand">
           <span className="brand-icon">S</span>
-          <span className="brand-name">SmartExpense</span>
+          <span className="brand-name">Smart Expense Tracker</span>
         </div>
-
-        <nav className="nav-links">
-          <a href="#">Dashboard</a>
-          <a href="#">Expenses</a>
-          <a href="#">Budgets</a>
-          <a href="#">Reports</a>
-        </nav>
 
         <div className="auth-actions">
           <button className="btn-link" type="button">
@@ -33,6 +26,7 @@ function Index() {
             Master Your Money,
             <br />
             <span>Effortlessly.</span>
+            <br />
           </h1>
           <p>
             Track expenses, set intelligent budgets, and get AI-driven insights to grow your wealth in one centralized,
@@ -42,11 +36,7 @@ function Index() {
             <button className="btn-primary big" type="button">
               Get Started Free
             </button>
-            <button className="btn-secondary big" type="button">
-              View Demo
-            </button>
           </div>
-          <p className="social-proof">Joined by 10k+ savers this month</p>
         </div>
 
         <div className="hero-card">
@@ -63,7 +53,7 @@ function Index() {
               <p>Spending by Category</p>
               <div className="chart-ring">
                 <div className="chart-center">
-                  <strong>$3,450</strong>
+                  <strong>Rs.3,450</strong>
                   <span>TOTAL</span>
                 </div>
               </div>
@@ -74,15 +64,15 @@ function Index() {
               <ul>
                 <li>
                   <span>Starbucks Coffee</span>
-                  <b className="neg">-$5.40</b>
+                  <b className="neg">-Rs.5.40</b>
                 </li>
                 <li>
                   <span>Uber Ride</span>
-                  <b className="neg">-$24.00</b>
+                  <b className="neg">-Rs.24.00</b>
                 </li>
                 <li>
                   <span>Salary Deposit</span>
-                  <b className="pos">+$4,200</b>
+                  <b className="pos">+Rs.4,200</b>
                 </li>
               </ul>
             </div>
@@ -109,7 +99,7 @@ function Index() {
           <article className="insight-card">
             <span className="insight-icon red">🔔</span>
             <h3>Upcoming Bills</h3>
-            <p>Electricity Bill due in 2 days ($85.00). Ensure funds are available.</p>
+            <p>Electricity Bill due in 2 days (Rs.85.00). Ensure funds are available.</p>
             <a href="#">Schedule Payment</a>
           </article>
 
@@ -125,53 +115,16 @@ function Index() {
       <section className="cta">
         <h2>Take control of your future today.</h2>
         <p>
-          Join over 500,000+ users who have optimized their spending and reached their financial goals with SmartExpense.
+          Join and optimize your spending and reach your financial goals with Smart Expense Tracker.
         </p>
         <div className="cta-actions">
           <button className="btn-light" type="button">
-            Start Your Free Trial
+            Join Now
           </button>
-          <button className="btn-outline" type="button">
-            Contact Sales
-          </button>
-        </div>
-        <small>No credit card required. Cancel anytime.</small>
+          </div>
       </section>
 
-      <footer className="footer">
-        <div className="footer-brand">
-          <div className="brand">
-            <span className="brand-icon">S</span>
-            <span className="brand-name">SmartExpense</span>
-          </div>
-          <p>The smarter way to manage your personal and business finances. Simple, secure, and insightful.</p>
-        </div>
-
-        <div className="footer-cols">
-          <div>
-            <h4>Product</h4>
-            <a href="#">Features</a>
-            <a href="#">Pricing</a>
-            <a href="#">Security</a>
-            <a href="#">Roadmap</a>
-          </div>
-          <div>
-            <h4>Company</h4>
-            <a href="#">About Us</a>
-            <a href="#">Careers</a>
-            <a href="#">Press</a>
-            <a href="#">Contact</a>
-          </div>
-          <div>
-            <h4>Legal</h4>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Cookie Policy</a>
-          </div>
-        </div>
-      </footer>
-
-      <div className="copyright">© 2023 SmartExpense Inc. All rights reserved.</div>
+      <div className="copyright">© 2025 NutzyCraft All rights reserved.</div>
     </div>
   )
 }
