@@ -1,0 +1,642 @@
+/* ── Dashboard root layout ─────────────────────────────────────────────────── */
+
+.db-root {
+  display: flex;
+  min-height: 100vh;
+  background: #f3f4f6;
+  font-family: Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #111827;
+}
+
+/* ── Main area ───────────────────────────────────────────────────────────────── */
+
+.db-main {
+  flex: 1;
+  min-width: 0;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-x: hidden;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.db-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.db-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.db-hamburger {
+  display: none;
+  border: none;
+  background: #fff;
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.db-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.db-subtitle {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 2px 0 0;
+}
+
+.db-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.db-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  transition: box-shadow 0.15s;
+}
+
+.db-icon-btn:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.db-add-btn {
+  white-space: nowrap;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
+  transition: box-shadow 0.15s, transform 0.1s;
+}
+
+.db-add-btn:hover {
+  box-shadow: 0 6px 18px rgba(29, 78, 216, 0.4);
+  transform: translateY(-1px);
+}
+
+/* ── KPI cards ───────────────────────────────────────────────────────────────── */
+
+.db-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.kpi-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.06);
+  border: 1px solid #f1f5f9;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.kpi-card:hover {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+  transform: translateY(-2px);
+}
+
+.kpi-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.kpi-icon {
+  font-size: 22px;
+}
+
+.kpi-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 100px;
+}
+
+.kpi-badge.pos {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.kpi-badge.neg {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.kpi-label {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kpi-value {
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+
+.kpi-change {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.kpi-change.pos { color: #16a34a; }
+.kpi-change.neg { color: #ef4444; }
+
+/* ── Generic card ────────────────────────────────────────────────────────────── */
+
+.db-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.06);
+  border: 1px solid #f1f5f9;
+}
+
+.db-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.db-card-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.db-card-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+.db-card-tag-blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.db-text-btn {
+  border: none;
+  background: transparent;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.db-text-btn:hover {
+  text-decoration: underline;
+}
+
+/* ── Charts row ─────────────────────────────────────────────────────────────── */
+
+.db-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 18px;
+}
+
+.db-chart-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Doughnut */
+.db-donut-wrap {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex: 1;
+}
+
+.db-donut-chart {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  flex-shrink: 0;
+}
+
+.db-donut-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.db-donut-center strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.db-donut-center span {
+  font-size: 9px;
+  color: #9ca3af;
+  letter-spacing: 0.06em;
+}
+
+.db-donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+}
+
+.db-donut-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-name {
+  flex: 1;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legend-val {
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+/* Line chart */
+.db-line-chart {
+  height: 200px;
+}
+
+.db-chart-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #6b7280;
+  align-items: center;
+}
+
+.db-chart-legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Mid row: savings bar + budget ───────────────────────────────────────────── */
+
+.db-mid-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+/* Savings bar */
+.db-bar-chart {
+  height: 190px;
+}
+
+/* Budget list */
+.db-budget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.budget-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 6px;
+  column-gap: 12px;
+}
+
+.budget-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  grid-column: 1 / 2;
+}
+
+.budget-pct {
+  grid-column: 2 / 3;
+  grid-row: 1 / 3;
+  align-self: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.budget-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.budget-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  flex: 1;
+}
+
+.budget-amounts {
+  font-size: 12px;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.budget-amounts b {
+  color: #111827;
+}
+
+.budget-bar-bg {
+  height: 6px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  grid-column: 1 / 2;
+  overflow: hidden;
+}
+
+.budget-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+
+.budget-bar-fill.status-warn {
+  background: #f59e0b !important;
+}
+
+.budget-bar-fill.status-danger {
+  background: #ef4444 !important;
+}
+
+/* ── Bottom row: goals + transactions ────────────────────────────────────────── */
+
+.db-bot-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+/* Goals */
+.db-goals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.goal-card {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px;
+  transition: box-shadow 0.2s;
+}
+
+.goal-card:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.goal-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.goal-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.goal-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.goal-info h4 {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.goal-deadline {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.goal-pct {
+  font-size: 15px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.goal-amounts {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.goal-bar-bg {
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.goal-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+
+/* Transactions */
+.db-tx-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.db-tx-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+
+.db-tx-item:hover {
+  background: #f8fafc;
+}
+
+.db-tx-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.db-tx-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.db-tx-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-tx-meta {
+  display: block;
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 1px;
+}
+
+.db-tx-amount {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.db-tx-amount.pos { color: #16a34a; }
+.db-tx-amount.neg { color: #ef4444; }
+
+/* ── Responsive ──────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1280px) {
+  .db-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .db-charts-row,
+  .db-mid-row,
+  .db-bot-row {
+    grid-template-columns: 1fr;
+  }
+
+  .db-donut-wrap {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 900px) {
+  .db-hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .db-main {
+    padding: 18px 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .db-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .db-title {
+    font-size: 18px;
+  }
+
+  .db-add-btn {
+    display: none;
+  }
+
+  .db-goals-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .db-donut-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .db-donut-chart {
+    align-self: center;
+  }
+}
