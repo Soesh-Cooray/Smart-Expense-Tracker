@@ -1,6 +1,8 @@
+import { useNavigate } from 'react-router-dom'
 import './Index.css'
 
 function Index() {
+  const navigate = useNavigate()
   return (
     <div className="page">
       <header className="topbar">
@@ -10,10 +12,10 @@ function Index() {
         </div>
 
         <div className="auth-actions">
-          <button className="btn-link" type="button">
+          <button className="btn-link" type="button" onClick={() => navigate('/login')}>
             Login
           </button>
-          <button className="btn-primary" type="button">
+          <button className="btn-primary" type="button" onClick={() => navigate('/signup')}>
             Sign Up
           </button>
         </div>
@@ -33,7 +35,7 @@ function Index() {
             secure platform designed for modern life.
           </p>
           <div className="hero-actions">
-            <button className="btn-primary big" type="button">
+            <button className="btn-primary big" type="button" onClick={() => navigate('/signup')}>
               Get Started Free
             </button>
           </div>
@@ -118,7 +120,7 @@ function Index() {
           Join and optimize your spending and reach your financial goals with Smart Expense Tracker.
         </p>
         <div className="cta-actions">
-          <button className="btn-light" type="button">
+          <button className="btn-light" type="button" onClick={() => navigate('/signup')}>
             Join Now
           </button>
           </div>
