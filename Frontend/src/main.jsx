@@ -3,8 +3,9 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import Index from './Index.jsx'
-import Login from './Login.jsx'
-import Signup from './Signup.jsx'
+import Login from './components/auth/Login.jsx'
+import Signup from './components/auth/Signup.jsx'
+import VerifyAccount from './components/auth/VerifyAccount.jsx'
 import Dashboard from './Dashboard.jsx'
 
 createRoot(document.getElementById('root')).render(
@@ -14,6 +15,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/verify" element={<VerifyAccount />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>
