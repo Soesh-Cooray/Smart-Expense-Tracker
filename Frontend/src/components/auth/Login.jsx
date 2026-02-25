@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Auth.css'
 
+const API_BASE = 'http://localhost:8080'
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function validate(fields) {
@@ -95,10 +97,30 @@ export default function Login() {
     }
     setSubmitting(true)
     setFormError('')
-    // Simulate network call — swap with real API call when backend is ready
-    await new Promise((r) => setTimeout(r, 900))
-    setSubmitting(false)
-    navigate('/dashboard')
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: fields.email,
+          password: fields.password,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setFormError(data.error || 'Login failed. Please try again.')
+        return
+      }
+
+      navigate('/dashboard')
+    } catch {
+      setFormError('Could not connect to server. Please try again later.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

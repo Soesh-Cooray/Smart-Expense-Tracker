@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Auth.css'
 
+const API_BASE = 'http://localhost:8080'
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function getPasswordStrength(pw) {
@@ -23,8 +25,7 @@ function getPasswordStrength(pw) {
 
 function validate(fields) {
   const errors = {}
-  if (!fields.firstName.trim()) errors.firstName = 'First name is required.'
-  if (!fields.lastName.trim())  errors.lastName  = 'Last name is required.'
+  if (!fields.fullName.trim()) errors.fullName = 'Full name is required.'
   if (!fields.email.trim()) {
     errors.email = 'Email is required.'
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)) {
@@ -101,8 +102,7 @@ export default function Signup() {
   const navigate = useNavigate()
 
   const [fields, setFields] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -113,6 +113,7 @@ export default function Signup() {
   const [agreedToTerms, setAgreedToTerms]     = useState(false)
   const [termsError, setTermsError]           = useState('')
   const [submitting, setSubmitting]           = useState(false)
+  const [formError, setFormError]             = useState('')
 
   const pwStrength = getPasswordStrength(fields.password)
 
@@ -120,6 +121,7 @@ export default function Signup() {
     const { name, value } = e.target
     setFields((prev) => ({ ...prev, [name]: value }))
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
+    setFormError('')
   }
 
   async function handleSubmit(e) {
@@ -128,11 +130,33 @@ export default function Signup() {
     if (Object.keys(validation).length) { setErrors(validation); return }
     if (!agreedToTerms) { setTermsError('You must agree to the terms to continue.'); return }
     setTermsError('')
+    setFormError('')
     setSubmitting(true)
-    // Simulate network call — swap with real API call when backend is ready
-    await new Promise((r) => setTimeout(r, 1000))
-    setSubmitting(false)
-    navigate('/dashboard')
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: fields.fullName,
+          email: fields.email,
+          password: fields.password,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setFormError(data.error || 'Registration failed. Please try again.')
+        return
+      }
+
+      navigate('/verify', { state: { email: fields.email } })
+    } catch {
+      setFormError('Could not connect to server. Please try again later.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const strengthSegClass = (idx) => {
@@ -152,44 +176,28 @@ export default function Signup() {
           </div>
 
           <div className="auth-card">
-            <form onSubmit={handleSubmit} noValidate>
-              {/* Name row */}
-              <div className="auth-field-row">
-                <div className="auth-field">
-                  <label htmlFor="su-first">First name</label>
-                  <div className="auth-input-wrap">
-                    <span className="auth-input-icon">👤</span>
-                    <input
-                      id="su-first"
-                      className={`auth-input ${errors.firstName ? 'error' : ''}`}
-                      type="text"
-                      name="firstName"
-                      placeholder="John"
-                      value={fields.firstName}
-                      onChange={handleChange}
-                      autoComplete="given-name"
-                    />
-                  </div>
-                  {errors.firstName && <p className="auth-field-error">{errors.firstName}</p>}
-                </div>
+            {formError && (
+              <div className="auth-alert error">⚠ {formError}</div>
+            )}
 
-                <div className="auth-field">
-                  <label htmlFor="su-last">Last name</label>
-                  <div className="auth-input-wrap">
-                    <span className="auth-input-icon">👤</span>
-                    <input
-                      id="su-last"
-                      className={`auth-input ${errors.lastName ? 'error' : ''}`}
-                      type="text"
-                      name="lastName"
-                      placeholder="Doe"
-                      value={fields.lastName}
-                      onChange={handleChange}
-                      autoComplete="family-name"
-                    />
-                  </div>
-                  {errors.lastName && <p className="auth-field-error">{errors.lastName}</p>}
+            <form onSubmit={handleSubmit} noValidate>
+              {/* Full name */}
+              <div className="auth-field">
+                <label htmlFor="su-fullname">Full name</label>
+                <div className="auth-input-wrap">
+                  <span className="auth-input-icon">👤</span>
+                  <input
+                    id="su-fullname"
+                    className={`auth-input ${errors.fullName ? 'error' : ''}`}
+                    type="text"
+                    name="fullName"
+                    placeholder="John Doe"
+                    value={fields.fullName}
+                    onChange={handleChange}
+                    autoComplete="name"
+                  />
                 </div>
+                {errors.fullName && <p className="auth-field-error">{errors.fullName}</p>}
               </div>
 
               {/* Email */}
