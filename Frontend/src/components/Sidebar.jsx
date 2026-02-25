@@ -1,12 +1,13 @@
+import { useNavigate } from 'react-router-dom'
 import './Sidebar.css'
 
 const navItems = [
-  { id: 'overview',  label: 'Overview',  icon: '⊞' },
-  { id: 'expenses',  label: 'Expenses',  icon: '📉' },
-  { id: 'income',    label: 'Income',    icon: '📈' },
-  { id: 'budgets',   label: 'Budgets',   icon: '📊' },
-  { id: 'goals',     label: 'Goals',     icon: '🎯' },
-  { id: 'settings',  label: 'Settings',  icon: '⚙'  },
+  { id: 'overview',  label: 'Overview',  icon: '⊞',  path: '/dashboard' },
+  { id: 'expenses',  label: 'Expenses',  icon: '📉',  path: null },
+  { id: 'income',    label: 'Income',    icon: '📈',  path: null },
+  { id: 'budgets',   label: 'Budgets',   icon: '📊',  path: null },
+  { id: 'goals',     label: 'Goals',     icon: '🎯',  path: '/goals' },
+  { id: 'settings',  label: 'Settings',  icon: '⚙',   path: null },
 ]
 
 /**
@@ -19,8 +20,14 @@ const navItems = [
  *   onClose    {function} – called when the overlay is clicked (mobile close)
  */
 export default function Sidebar({ activeNav, onNavChange, isOpen, onClose }) {
-  function handleNavClick(id) {
-    onNavChange(id)
+  const navigate = useNavigate()
+
+  function handleNavClick(item) {
+    if (item.path) {
+      navigate(item.path)
+    } else {
+      onNavChange(item.id)
+    }
     onClose()
   }
 
@@ -38,7 +45,7 @@ export default function Sidebar({ activeNav, onNavChange, isOpen, onClose }) {
               key={item.id}
               type="button"
               className={`db-nav-item ${activeNav === item.id ? 'active' : ''}`}
-              onClick={() => handleNavClick(item.id)}
+              onClick={() => handleNavClick(item)}
             >
               <span className="db-nav-icon">{item.icon}</span>
               <span>{item.label}</span>

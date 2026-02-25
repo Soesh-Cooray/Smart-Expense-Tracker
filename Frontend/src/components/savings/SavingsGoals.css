@@ -1,0 +1,655 @@
+/* ── Savings Goals page ─────────────────────────────────────────────────────── */
+
+/* Charts row */
+.sg-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 18px;
+}
+
+.sg-chart-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.sg-donut-wrap {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex: 1;
+}
+
+.sg-donut-chart {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+}
+
+.sg-bar-chart {
+  flex: 1;
+  min-height: 160px;
+}
+
+/* ── Goal cards grid ─────────────────────────────────────────────────────────── */
+
+.sg-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.sg-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.05);
+  transition: box-shadow 0.2s, transform 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sg-card:hover {
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.10);
+  transform: translateY(-2px);
+}
+
+/* Top row: icon + name + pct */
+.sg-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.sg-icon-bubble {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.sg-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sg-card-name {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sg-card-date {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.sg-card-pct {
+  font-size: 20px;
+  font-weight: 800;
+  flex-shrink: 0;
+  letter-spacing: -0.5px;
+}
+
+/* Days remaining badge */
+.sg-days-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.sg-days-badge.ok {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.sg-days-badge.warn {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.sg-days-badge.danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Amounts */
+.sg-card-amounts {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.sg-card-amounts strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+/* Progress bar */
+.sg-progress-bg {
+  height: 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.sg-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.5s ease;
+}
+
+.sg-target-label {
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: right;
+}
+
+/* Card action row */
+.sg-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sg-btn-edit {
+  flex: 1;
+  padding: 7px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: transparent;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.sg-btn-edit:hover {
+  border-color: #1d4ed8;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.sg-btn-delete {
+  flex: 1;
+  padding: 7px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.sg-btn-delete:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fff5f5;
+}
+
+/* Delete confirm overlay */
+.sg-confirm-overlay {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 8px;
+  min-height: 160px;
+}
+
+.sg-confirm-overlay p {
+  margin: 0;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.sg-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.sg-btn-danger-sm {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #ef4444;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.sg-btn-danger-sm:hover {
+  background: #dc2626;
+}
+
+.sg-btn-ghost-sm {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1.5px solid #e5e7eb;
+  background: transparent;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.sg-btn-ghost-sm:hover {
+  background: #f9fafb;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────────── */
+
+.sg-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+}
+
+.sg-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.sg-empty h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.sg-empty p {
+  margin: 0 0 24px;
+  color: #6b7280;
+  max-width: 360px;
+  line-height: 1.6;
+}
+
+.sg-btn-primary-lg {
+  padding: 12px 28px;
+  border-radius: 10px;
+  border: none;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.35);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.sg-btn-primary-lg:hover {
+  background: #1e40af;
+  box-shadow: 0 6px 20px rgba(29, 78, 216, 0.45);
+}
+
+/* ── Alert ───────────────────────────────────────────────────────────────────── */
+
+.sg-alert {
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+/* ── Section title ───────────────────────────────────────────────────────────── */
+
+.sg-section-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ── Modal ───────────────────────────────────────────────────────────────────── */
+
+.sg-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.sg-modal {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+}
+
+/* Form must flex so body scrolls and footer stays pinned */
+.sg-modal form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sg-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px 0;
+}
+
+.sg-modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sg-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sg-modal-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.sg-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Preview strip */
+.sg-modal-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1.5px solid;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.sg-modal-preview-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.sg-modal-preview-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sg-modal-preview-sub {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* Form fields */
+.sg-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sg-form-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sg-form-field input {
+  padding: 10px 13px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 9px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #111827;
+  background: #f9fafb;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.sg-form-field input:focus {
+  border-color: #1d4ed8;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+}
+
+.sg-form-field input.error {
+  border-color: #ef4444;
+  background: #fff5f5;
+}
+
+.sg-field-error {
+  font-size: 11.5px;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.sg-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Icon grid */
+.sg-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.sg-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  padding: 0;
+}
+
+.sg-icon-btn:hover {
+  border-color: #d1d5db;
+  background: #fff;
+  transform: scale(1.1);
+}
+
+.sg-icon-btn.selected {
+  transform: scale(1.12);
+}
+
+/* Color picker */
+.sg-color-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sg-color-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  padding: 0;
+}
+
+.sg-color-dot:hover {
+  transform: scale(1.15);
+}
+
+.sg-color-dot.selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 2.5px currentColor, 0 0 0 3px rgba(0, 0, 0, 0.15);
+  transform: scale(1.18);
+}
+
+/* Modal footer */
+.sg-modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.sg-btn-cancel {
+  flex: 1;
+  padding: 11px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  background: transparent;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.sg-btn-cancel:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.sg-btn-save {
+  flex: 2;
+  padding: 11px;
+  border: none;
+  border-radius: 10px;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.35);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.sg-btn-save:hover {
+  background: #1e40af;
+  box-shadow: 0 6px 18px rgba(29, 78, 216, 0.45);
+}
+
+.sg-btn-save:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1200px) {
+  .sg-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .sg-charts-row {
+    grid-template-columns: 1fr;
+  }
+
+  .sg-donut-wrap {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 900px) {
+  .sg-icon-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .sg-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sg-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .sg-icon-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  .sg-modal {
+    max-height: 95vh;
+  }
+}
