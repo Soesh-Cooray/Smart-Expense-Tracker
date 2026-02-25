@@ -130,46 +130,6 @@
   font-weight: 500;
 }
 
-/* Decorative stat cards */
-.auth-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.auth-stat-card {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
-  padding: 16px;
-  backdrop-filter: blur(8px);
-}
-
-.auth-stat-card-label {
-  font-size: 11px;
-  color: #93c5fd;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 6px;
-}
-
-.auth-stat-card-value {
-  font-size: 22px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.5px;
-}
-
-.auth-stat-card-change {
-  font-size: 11px;
-  color: #86efac;
-  font-weight: 600;
-  margin-top: 4px;
-}
-
 /* ── Right form panel ─────────────────────────────────────────────────────── */
 
 .auth-right {

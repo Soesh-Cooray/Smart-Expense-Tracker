@@ -51,19 +51,6 @@ function LeftPanel() {
             <span>AI-powered expense categorization</span>
           </div>
         </div>
-
-        <div className="auth-stats">
-          <div className="auth-stat-card">
-            <div className="auth-stat-card-label">Total Saved</div>
-            <div className="auth-stat-card-value">Rs.24.8k</div>
-            <div className="auth-stat-card-change">↑ 12% this month</div>
-          </div>
-          <div className="auth-stat-card">
-            <div className="auth-stat-card-label">Savings Rate</div>
-            <div className="auth-stat-card-value">42%</div>
-            <div className="auth-stat-card-change">↑ 3% vs last month</div>
-          </div>
-        </div>
       </div>
     </div>
   )

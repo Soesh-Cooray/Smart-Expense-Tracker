@@ -71,24 +71,11 @@ function LeftPanel() {
           </div>
           <div className="auth-feature">
             <span className="auth-feature-icon">📈</span>
-            <span>Personalised AI insights from day one</span>
+            <span>Personalised AI insights </span>
           </div>
           <div className="auth-feature">
             <span className="auth-feature-icon">🎯</span>
             <span>Set and track savings goals visually</span>
-          </div>
-        </div>
-
-        <div className="auth-stats">
-          <div className="auth-stat-card">
-            <div className="auth-stat-card-label">Active Users</div>
-            <div className="auth-stat-card-value">12k+</div>
-            <div className="auth-stat-card-change">↑ Growing daily</div>
-          </div>
-          <div className="auth-stat-card">
-            <div className="auth-stat-card-label">Avg. Saved</div>
-            <div className="auth-stat-card-value">Rs.8.4k</div>
-            <div className="auth-stat-card-change">↑ Per user / month</div>
           </div>
         </div>
       </div>
@@ -318,11 +305,6 @@ export default function Signup() {
               <span>or sign up with</span>
               <div className="auth-divider-line" />
             </div>
-
-            <button type="button" className="auth-oauth-btn">
-              <span className="auth-oauth-icon">G</span>
-              Continue with Google
-            </button>
           </div>
 
           <p className="auth-switch">
