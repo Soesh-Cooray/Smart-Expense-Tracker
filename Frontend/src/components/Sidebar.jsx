@@ -3,7 +3,7 @@ import './Sidebar.css'
 
 const navItems = [
   { id: 'overview',  label: 'Overview',  icon: '⊞',  path: '/dashboard' },
-  { id: 'expenses',  label: 'Expenses',  icon: '📉',  path: null },
+  { id: "expenses", label: "Expenses", icon: "📉", path: "/expenses"  },
   { id: 'income',    label: 'Income',    icon: '📈',  path: null },
   { id: 'budgets',   label: 'Budgets',   icon: '📊',  path: null },
   { id: 'goals',     label: 'Goals',     icon: '🎯',  path: '/goals' },
@@ -16,7 +16,8 @@ const navItems = [
  * Props:
  *   activeNav  {string}   – id of the currently active nav item
  *   onNavChange{function} – called with the new item id when a nav button is clicked
- *   isOpen     {boolean}  – controls mobile slide-in state
+ *   isOpen     {boolean}  – controls mob
+ *   ile slide-in state
  *   onClose    {function} – called when the overlay is clicked (mobile close)
  */
 export default function Sidebar({ activeNav, onNavChange, isOpen, onClose }) {

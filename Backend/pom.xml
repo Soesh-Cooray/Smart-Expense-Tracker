@@ -85,6 +85,7 @@
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
+        jdbc:postgresql://ep-calm-king-a859xcmu-pooler.eastus2.azure.neon.tech/neondb?sslmode=require
     </dependencies>
 
     <build>

@@ -16,15 +16,15 @@ import Sidebar from './components/Sidebar'
 import './Dashboard.css'
 
 ChartJS.register(
-  ArcElement,
-  Tooltip,
-  Legend,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Filler
+    ArcElement,
+    Tooltip,
+    Legend,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    BarElement,
+    Filler
 )
 
 // ── static mock data ────────────────────────────────────────────────────────
@@ -192,15 +192,15 @@ function budgetStatus(p) {
 
 function KpiCard({ kpi }) {
   return (
-    <div className="kpi-card">
-      <div className="kpi-top">
-        <span className="kpi-icon">{kpi.icon}</span>
-        <span className={`kpi-badge ${kpi.positive ? 'pos' : 'neg'}`}>{kpi.positive ? '↑' : '↓'}</span>
+      <div className="kpi-card">
+        <div className="kpi-top">
+          <span className="kpi-icon">{kpi.icon}</span>
+          <span className={`kpi-badge ${kpi.positive ? 'pos' : 'neg'}`}>{kpi.positive ? '↑' : '↓'}</span>
+        </div>
+        <p className="kpi-label">{kpi.label}</p>
+        <h2 className="kpi-value">{kpi.value}</h2>
+        <span className={`kpi-change ${kpi.positive ? 'pos' : 'neg'}`}>{kpi.change}</span>
       </div>
-      <p className="kpi-label">{kpi.label}</p>
-      <h2 className="kpi-value">{kpi.value}</h2>
-      <span className={`kpi-change ${kpi.positive ? 'pos' : 'neg'}`}>{kpi.change}</span>
-    </div>
   )
 }
 
@@ -208,45 +208,45 @@ function BudgetRow({ b }) {
   const p = pct(b.spent, b.limit)
   const status = budgetStatus(p)
   return (
-    <div className="budget-row">
-      <div className="budget-meta">
-        <div className="budget-dot" style={{ background: b.color }} />
-        <span className="budget-name">{b.category}</span>
-        <span className="budget-amounts">
+      <div className="budget-row">
+        <div className="budget-meta">
+          <div className="budget-dot" style={{ background: b.color }} />
+          <span className="budget-name">{b.category}</span>
+          <span className="budget-amounts">
           <b>Rs.{b.spent.toLocaleString()}</b> / Rs.{b.limit.toLocaleString()}
         </span>
+        </div>
+        <div className="budget-bar-bg">
+          <div
+              className={`budget-bar-fill status-${status}`}
+              style={{ width: `${p}%`, background: status === 'ok' ? b.color : undefined }}
+          />
+        </div>
+        <span className="budget-pct">{p}%</span>
       </div>
-      <div className="budget-bar-bg">
-        <div
-          className={`budget-bar-fill status-${status}`}
-          style={{ width: `${p}%`, background: status === 'ok' ? b.color : undefined }}
-        />
-      </div>
-      <span className="budget-pct">{p}%</span>
-    </div>
   )
 }
 
 function GoalCard({ g }) {
   const p = pct(g.saved, g.goal)
   return (
-    <div className="goal-card">
-      <div className="goal-top">
-        <span className="goal-icon">{g.icon}</span>
-        <div className="goal-info">
-          <h4>{g.name}</h4>
-          <span className="goal-deadline">Target: {g.deadline}</span>
+      <div className="goal-card">
+        <div className="goal-top">
+          <span className="goal-icon">{g.icon}</span>
+          <div className="goal-info">
+            <h4>{g.name}</h4>
+            <span className="goal-deadline">Target: {g.deadline}</span>
+          </div>
+          <span className="goal-pct" style={{ color: g.color }}>{p}%</span>
         </div>
-        <span className="goal-pct" style={{ color: g.color }}>{p}%</span>
+        <div className="goal-amounts">
+          <span>Rs.{g.saved.toLocaleString()} saved</span>
+          <span>Rs.{g.goal.toLocaleString()} goal</span>
+        </div>
+        <div className="goal-bar-bg">
+          <div className="goal-bar-fill" style={{ width: `${p}%`, background: g.color }} />
+        </div>
       </div>
-      <div className="goal-amounts">
-        <span>Rs.{g.saved.toLocaleString()} saved</span>
-        <span>Rs.{g.goal.toLocaleString()} goal</span>
-      </div>
-      <div className="goal-bar-bg">
-        <div className="goal-bar-fill" style={{ width: `${p}%`, background: g.color }} />
-      </div>
-    </div>
   )
 }
 
@@ -262,138 +262,138 @@ export default function Dashboard() {
   const categoryLabels = doughnutData.labels
 
   return (
-    <div className="db-root">
-      <Sidebar
-        activeNav={activeNav}
-        onNavChange={setActiveNav}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+      <div className="db-root">
+        <Sidebar
+            activeNav={activeNav}
+            onNavChange={setActiveNav}
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+        />
 
-      {/* ── Main area ── */}
-      <main className="db-main">
-        {/* Top header */}
-        <header className="db-header">
-          <div className="db-header-left">
-            <button className="db-hamburger" type="button" onClick={() => setSidebarOpen(true)}>☰</button>
-            <div>
-              <h1 className="db-title">Financial Overview</h1>
-              <p className="db-subtitle">{today}</p>
+        {/* ── Main area ── */}
+        <main className="db-main">
+          {/* Top header */}
+          <header className="db-header">
+            <div className="db-header-left">
+              <button className="db-hamburger" type="button" onClick={() => setSidebarOpen(true)}>☰</button>
+              <div>
+                <h1 className="db-title">Financial Overview</h1>
+                <p className="db-subtitle">{today}</p>
+              </div>
             </div>
-          </div>
-          <div className="db-header-right">
-            <button className="db-icon-btn" type="button" title="Notifications">🔔</button>
-            <button className="btn-primary db-add-btn" type="button">+ Add Transaction</button>
-          </div>
-        </header>
-
-        {/* KPI cards */}
-        <section className="db-kpi-grid">
-          {kpis.map((k) => <KpiCard key={k.label} kpi={k} />)}
-        </section>
-
-        {/* Charts row */}
-        <section className="db-charts-row">
-          {/* Doughnut – expense breakdown */}
-          <div className="db-card db-chart-card">
-            <div className="db-card-header">
-              <h3>Expense Breakdown</h3>
-              <span className="db-card-tag">Feb 2025</span>
+            <div className="db-header-right">
+              <button className="db-icon-btn" type="button" title="Notifications">🔔</button>
+              <button className="btn-primary db-add-btn" type="button">+ Add Transaction</button>
             </div>
-            <div className="db-donut-wrap">
-              <div className="db-donut-chart">
-                <Doughnut data={doughnutData} options={doughnutOptions} />
-                <div className="db-donut-center">
-                  <strong>Rs.2,975</strong>
-                  <span>TOTAL</span>
+          </header>
+
+          {/* KPI cards */}
+          <section className="db-kpi-grid">
+            {kpis.map((k) => <KpiCard key={k.label} kpi={k} />)}
+          </section>
+
+          {/* Charts row */}
+          <section className="db-charts-row">
+            {/* Doughnut – expense breakdown */}
+            <div className="db-card db-chart-card">
+              <div className="db-card-header">
+                <h3>Expense Breakdown</h3>
+                <span className="db-card-tag">Feb 2025</span>
+              </div>
+              <div className="db-donut-wrap">
+                <div className="db-donut-chart">
+                  <Doughnut data={doughnutData} options={doughnutOptions} />
+                  <div className="db-donut-center">
+                    <strong>Rs.2,975</strong>
+                    <span>TOTAL</span>
+                  </div>
+                </div>
+                <ul className="db-donut-legend">
+                  {categoryLabels.map((label, i) => (
+                      <li key={label}>
+                        <span className="legend-dot" style={{ background: categoryColors[i] }} />
+                        <span className="legend-name">{label}</span>
+                        <span className="legend-val">Rs.{doughnutData.datasets[0].data[i].toLocaleString()}</span>
+                      </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Line – income vs expenses */}
+            <div className="db-card db-chart-card">
+              <div className="db-card-header">
+                <h3>Income vs Expenses</h3>
+                <div className="db-chart-legend">
+                  <span><span className="legend-dot" style={{ background: '#16a34a' }} />Income</span>
+                  <span><span className="legend-dot" style={{ background: '#ef4444' }} />Expenses</span>
                 </div>
               </div>
-              <ul className="db-donut-legend">
-                {categoryLabels.map((label, i) => (
-                  <li key={label}>
-                    <span className="legend-dot" style={{ background: categoryColors[i] }} />
-                    <span className="legend-name">{label}</span>
-                    <span className="legend-val">Rs.{doughnutData.datasets[0].data[i].toLocaleString()}</span>
-                  </li>
+              <div className="db-line-chart">
+                <Line data={lineData} options={lineOptions} />
+              </div>
+            </div>
+          </section>
+
+          {/* Savings bar + budget row */}
+          <section className="db-mid-row">
+            {/* Monthly savings bar chart */}
+            <div className="db-card">
+              <div className="db-card-header">
+                <h3>Monthly Savings</h3>
+                <span className="db-card-tag db-card-tag-blue">6-month trend</span>
+              </div>
+              <div className="db-bar-chart">
+                <Bar data={barData} options={barOptions} />
+              </div>
+            </div>
+
+            {/* Budget tracker */}
+            <div className="db-card db-budget-card">
+              <div className="db-card-header">
+                <h3>Budget Tracker</h3>
+                <span className="db-card-tag">Feb 2025</span>
+              </div>
+              <div className="db-budget-list">
+                {budgets.map((b) => <BudgetRow key={b.category} b={b} />)}
+              </div>
+            </div>
+          </section>
+
+          {/* Savings goals + recent transactions row */}
+          <section className="db-bot-row">
+            {/* Savings goals */}
+            <div className="db-card">
+              <div className="db-card-header">
+                <h3>Savings Goals</h3>
+                <button className="db-text-btn" type="button">+ New Goal</button>
+              </div>
+              <div className="db-goals-grid">
+                {savingsGoals.map((g) => <GoalCard key={g.name} g={g} />)}
+              </div>
+            </div>
+
+            {/* Recent transactions */}
+            <div className="db-card db-tx-card">
+              <div className="db-card-header">
+                <h3>Recent Transactions</h3>
+                <button className="db-text-btn" type="button">View all</button>
+              </div>
+              <ul className="db-tx-list">
+                {transactions.map((tx) => (
+                    <li key={tx.id} className="db-tx-item">
+                      <span className="db-tx-icon">{tx.icon}</span>
+                      <div className="db-tx-info">
+                        <span className="db-tx-name">{tx.name}</span>
+                        <span className="db-tx-meta">{tx.category} · {tx.date}</span>
+                      </div>
+                      <span className={`db-tx-amount ${tx.positive ? 'pos' : 'neg'}`}>{tx.amount}</span>
+                    </li>
                 ))}
               </ul>
             </div>
-          </div>
-
-          {/* Line – income vs expenses */}
-          <div className="db-card db-chart-card">
-            <div className="db-card-header">
-              <h3>Income vs Expenses</h3>
-              <div className="db-chart-legend">
-                <span><span className="legend-dot" style={{ background: '#16a34a' }} />Income</span>
-                <span><span className="legend-dot" style={{ background: '#ef4444' }} />Expenses</span>
-              </div>
-            </div>
-            <div className="db-line-chart">
-              <Line data={lineData} options={lineOptions} />
-            </div>
-          </div>
-        </section>
-
-        {/* Savings bar + budget row */}
-        <section className="db-mid-row">
-          {/* Monthly savings bar chart */}
-          <div className="db-card">
-            <div className="db-card-header">
-              <h3>Monthly Savings</h3>
-              <span className="db-card-tag db-card-tag-blue">6-month trend</span>
-            </div>
-            <div className="db-bar-chart">
-              <Bar data={barData} options={barOptions} />
-            </div>
-          </div>
-
-          {/* Budget tracker */}
-          <div className="db-card db-budget-card">
-            <div className="db-card-header">
-              <h3>Budget Tracker</h3>
-              <span className="db-card-tag">Feb 2025</span>
-            </div>
-            <div className="db-budget-list">
-              {budgets.map((b) => <BudgetRow key={b.category} b={b} />)}
-            </div>
-          </div>
-        </section>
-
-        {/* Savings goals + recent transactions row */}
-        <section className="db-bot-row">
-          {/* Savings goals */}
-          <div className="db-card">
-            <div className="db-card-header">
-              <h3>Savings Goals</h3>
-              <button className="db-text-btn" type="button">+ New Goal</button>
-            </div>
-            <div className="db-goals-grid">
-              {savingsGoals.map((g) => <GoalCard key={g.name} g={g} />)}
-            </div>
-          </div>
-
-          {/* Recent transactions */}
-          <div className="db-card db-tx-card">
-            <div className="db-card-header">
-              <h3>Recent Transactions</h3>
-              <button className="db-text-btn" type="button">View all</button>
-            </div>
-            <ul className="db-tx-list">
-              {transactions.map((tx) => (
-                <li key={tx.id} className="db-tx-item">
-                  <span className="db-tx-icon">{tx.icon}</span>
-                  <div className="db-tx-info">
-                    <span className="db-tx-name">{tx.name}</span>
-                    <span className="db-tx-meta">{tx.category} · {tx.date}</span>
-                  </div>
-                  <span className={`db-tx-amount ${tx.positive ? 'pos' : 'neg'}`}>{tx.amount}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      </main>
-    </div>
+          </section>
+        </main>
+      </div>
   )
 }
