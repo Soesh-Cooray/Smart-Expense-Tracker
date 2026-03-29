@@ -1,6 +1,7 @@
 package org.example.smart_expense_tracker.Service;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 
 import org.example.smart_expense_tracker.Controller.LoginRequest;
 import org.example.smart_expense_tracker.Controller.RegisterRequest;
@@ -107,6 +108,52 @@ public class AuthService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         authRepository.save(user);
+    }
+
+    public String forgotPassword(String email) {
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Email is required.");
+        }
+
+        Users user = authRepository.findByUsername(email)
+                .orElseThrow(() -> new RuntimeException("No account found for this email."));
+
+        int resetCode = 100000 + new SecureRandom().nextInt(900000);
+        user.setPasswordResetCode(resetCode);
+        user.setPasswordResetExpiry(LocalDateTime.now().plusMinutes(10));
+        authRepository.save(user);
+
+        emailService.sendPasswordResetEmail(email, resetCode);
+        return "Password reset code sent to your email.";
+    }
+
+    public String resetPassword(String email, Integer code, String newPassword) {
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Email is required.");
+        }
+        if (code == null) {
+            throw new RuntimeException("Reset code is required.");
+        }
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new RuntimeException("New password must be at least 6 characters.");
+        }
+
+        Users user = authRepository.findByUsername(email)
+                .orElseThrow(() -> new RuntimeException("No account found for this email."));
+
+        if (user.getPasswordResetCode() == null || !code.equals(user.getPasswordResetCode())) {
+            throw new RuntimeException("Invalid reset code.");
+        }
+        if (user.getPasswordResetExpiry() == null || LocalDateTime.now().isAfter(user.getPasswordResetExpiry())) {
+            throw new RuntimeException("Reset code has expired. Please request a new code.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordResetCode(null);
+        user.setPasswordResetExpiry(null);
+        authRepository.save(user);
+
+        return "Password reset successful. You can now log in.";
     }
 
     @Transactional

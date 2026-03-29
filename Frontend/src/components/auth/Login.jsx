@@ -162,7 +162,7 @@ export default function Login() {
                   <button
                     type="button"
                     className="auth-inline-link"
-                    onClick={() => {}}
+                    onClick={() => navigate('/forgot-password')}
                   >
                     Forgot password?
                   </button>

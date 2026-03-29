@@ -34,4 +34,24 @@ public class EmailService {
             log.error("Failed to send verification email to {}: {}", to, e.getMessage());
         }
     }
+
+    public void sendPasswordResetEmail(String to, int code) {
+        if (mailSender == null) {
+            log.warn("Mail sender not configured. Password reset code for {}: {}", to, code);
+            return;
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("SmartExpense - Reset your password");
+        message.setText("Your password reset code is: " + code
+                + "\n\nThis code expires in 10 minutes.");
+
+        try {
+            mailSender.send(message);
+            log.info("Password reset email sent to {}", to);
+        } catch (Exception e) {
+            log.error("Failed to send password reset email to {}: {}", to, e.getMessage());
+        }
+    }
 }
