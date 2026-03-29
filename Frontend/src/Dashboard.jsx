@@ -258,6 +258,7 @@ function GoalCard({ g }) {
 
 export default function Dashboard() {
   const location = useLocation()
+  const activeNav = new URLSearchParams(location.search).get('tab') || 'overview'
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [subscriptions, setSubscriptions] = useState([])
   const [totalSubscriptions, setTotalSubscriptions] = useState(0)
