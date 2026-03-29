@@ -3,8 +3,6 @@ import axios from "axios";
 import "./SubscriptionManager.css";
 
 const API_BASE = "http://localhost:8080/api/subscriptions";
-const USER_ID = 1; // Change if needed
-
 const SubscriptionManager = () => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [form, setForm] = useState({
@@ -18,11 +16,21 @@ const SubscriptionManager = () => {
   });
   const [editingId, setEditingId] = useState(null);
   const [total, setTotal] = useState(0);
+  const [userId, setUserId] = useState(null);
+
+  // Get userId from localStorage on mount
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      setUserId(parseInt(storedUserId));
+    }
+  }, []);
 
   // Fetch subscriptions
   const fetchSubscriptions = async () => {
+    if (!userId) return;
     try {
-      const res = await axios.get(`${API_BASE}/user/${USER_ID}`);
+      const res = await axios.get(`${API_BASE}/user/${userId}`);
       setSubscriptions(res.data);
     } catch (err) {
       console.error("Error fetching subscriptions:", err);
@@ -31,8 +39,9 @@ const SubscriptionManager = () => {
 
   // Fetch total active amount
   const fetchTotal = async () => {
+    if (!userId) return;
     try {
-      const res = await axios.get(`${API_BASE}/user/${USER_ID}/total`);
+      const res = await axios.get(`${API_BASE}/user/${userId}/total`);
       setTotal(res.data);
     } catch (err) {
       console.error("Error fetching total:", err);
@@ -40,9 +49,11 @@ const SubscriptionManager = () => {
   };
 
   useEffect(() => {
-    fetchSubscriptions();
-    fetchTotal();
-  }, []);
+    if (userId) {
+      fetchSubscriptions();
+      fetchTotal();
+    }
+  }, [userId]);
 
   // Handle form input change
   const handleChange = (e) => {
@@ -65,7 +76,18 @@ const SubscriptionManager = () => {
           userId: USER_ID,
         });
       }
-
+      if (editingId) {
+        await axios.put(`${API_BASE}/${editingId}`, {
+          ...form,
+          userId: userId,
+        });
+        setEditingId(null);
+      } else {
+        await axios.post(API_BASE, {
+          ...form,
+          userId: userId,
+        });
+      }
       // Reset form
       setForm({
         name: "",

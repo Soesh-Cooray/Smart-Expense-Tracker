@@ -19,8 +19,16 @@ public class SavingsGoalService {
         return repository.findAll();
     }
 
-    public SavingsGoal create(SavingsGoalRequest request) {
+    public List<SavingsGoal> findByUserId(Long userId) {
+        return repository.findByUserId(userId);
+    }
+
+    public SavingsGoal create(Long userId, SavingsGoalRequest request) {
+        if (userId == null) {
+            throw new RuntimeException("User ID is required");
+        }
         SavingsGoal goal = new SavingsGoal();
+        goal.setUserId(userId);
         goal.setName(request.getName());
         goal.setTargetAmount(request.getTargetAmount());
         goal.setSavedAmount(request.getSavedAmount());

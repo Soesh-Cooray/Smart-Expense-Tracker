@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Sidebar.css'
 
@@ -22,6 +23,8 @@ const navItems = [
  */
 export default function Sidebar({ activeNav, onNavChange, isOpen, onClose }) {
   const navigate = useNavigate()
+  const [userName] = useState(() => localStorage.getItem('userName') || 'User')
+  const [userEmail] = useState(() => localStorage.getItem('userEmail') || '')
 
   function handleNavClick(item) {
     if (item.path) {
@@ -31,6 +34,21 @@ export default function Sidebar({ activeNav, onNavChange, isOpen, onClose }) {
     }
     onClose()
   }
+
+  function handleLogout() {
+    localStorage.removeItem('userId')
+    localStorage.removeItem('userName')
+    localStorage.removeItem('userEmail')
+    onClose()
+    navigate('/login')
+  }
+
+  const initials = userName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('') || 'U'
 
   return (
     <>
@@ -56,12 +74,15 @@ export default function Sidebar({ activeNav, onNavChange, isOpen, onClose }) {
 
         <div className="db-sidebar-footer">
           <div className="db-user">
-            <div className="db-avatar">JD</div>
+            <div className="db-avatar">{initials}</div>
             <div>
-              <p className="db-user-name">John Doe</p>
-              <p className="db-user-email">john@example.com</p>
+              <p className="db-user-name">{userName}</p>
+              <p className="db-user-email">{userEmail || 'No email'}</p>
             </div>
           </div>
+          <button type="button" className="db-logout-btn" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </aside>
 

@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class SavingsGoalRequest {
+    private Long userId;
     private String name;
     private double targetAmount;
     private double savedAmount;

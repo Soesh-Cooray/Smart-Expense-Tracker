@@ -102,6 +102,15 @@ export default function Login() {
         return
       }
 
+      // Store user ID from login response
+      if (data.id) {
+        localStorage.setItem('userId', data.id)
+      } else if (data.userId) {
+        localStorage.setItem('userId', data.userId)
+      }
+      localStorage.setItem('userEmail', data.email || fields.email)
+      localStorage.setItem('userName', data.name || fields.email.split('@')[0])
+
       navigate('/dashboard')
     } catch {
       setFormError('Could not connect to server. Please try again later.')

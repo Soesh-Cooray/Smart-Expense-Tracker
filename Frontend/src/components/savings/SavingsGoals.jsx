@@ -391,16 +391,31 @@ export default function SavingsGoals() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingGoal, setEditingGoal] = useState(null)
+  const [userId, setUserId] = useState(null)
 
   useEffect(() => {
-    fetchGoals()
+    // Get user ID from localStorage
+    const storedUserId = localStorage.getItem('userId')
+    if (storedUserId) {
+      setUserId(parseInt(storedUserId))
+      fetchGoals(storedUserId)
+    } else {
+      setError('User not logged in. Please log in first.')
+      setLoading(false)
+    }
   }, [])
 
-  async function fetchGoals() {
+  async function fetchGoals(userIdParam) {
     try {
-      const res = await fetch(`${API_BASE}/savings-goals`)
+      const id = userIdParam || localStorage.getItem('userId')
+      if (!id) {
+        setError('User ID not found. Please log in again.')
+        return
+      }
+      const res = await fetch(`${API_BASE}/savings-goals/user/${id}`)
       if (!res.ok) throw new Error()
       setGoals(await res.json())
+      setError('')
     } catch {
       setError('Could not connect to the server. Make sure the backend is running.')
     } finally {
@@ -410,19 +425,32 @@ export default function SavingsGoals() {
 
   async function handleSave(data) {
     try {
+      const currentUserId = userId || localStorage.getItem('userId')
+      if (!currentUserId) {
+        setError('User ID not found. Please log in again.')
+        return
+      }
+      
       const url = editingGoal
         ? `${API_BASE}/savings-goals/${editingGoal.id}`
         : `${API_BASE}/savings-goals`
       const res = await fetch(url, {
         method: editingGoal ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          userId: parseInt(currentUserId),
+        }),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to save')
+      }
       await fetchGoals()
       closeModal()
-    } catch {
-      setError('Failed to save goal. Please try again.')
+      setError('')
+    } catch (err) {
+      setError(`Failed to save goal: ${err.message}`)
     }
   }
 
@@ -430,6 +458,7 @@ export default function SavingsGoals() {
     try {
       await fetch(`${API_BASE}/savings-goals/${id}`, { method: 'DELETE' })
       setGoals((prev) => prev.filter((g) => g.id !== id))
+      setError('')
     } catch {
       setError('Failed to delete goal.')
     }

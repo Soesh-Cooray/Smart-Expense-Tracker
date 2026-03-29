@@ -126,6 +126,25 @@
   color: #9ca3af;
 }
 
+.db-logout-btn {
+  margin-top: 10px;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.db-logout-btn:hover {
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
 /* Mobile overlay */
 .db-overlay {
   position: fixed;

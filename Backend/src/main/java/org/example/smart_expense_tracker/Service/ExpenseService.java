@@ -1,10 +1,10 @@
 package org.example.smart_expense_tracker.Service;
 
+import java.util.List;
+
 import org.example.smart_expense_tracker.Model.Expense;
 import org.example.smart_expense_tracker.Repository.ExpenseRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class ExpenseService {
@@ -19,12 +19,19 @@ public class ExpenseService {
         return expenseRepository.findAll();
     }
 
+    public List<Expense> getExpensesByUserId(Long userId) {
+        return expenseRepository.findByUserId(userId);
+    }
+
     public Expense getExpenseById(Long id) {
         return expenseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Expense not found"));
     }
 
     public Expense createExpense(Expense expense) {
+        if (expense.getUserId() == null) {
+            throw new RuntimeException("User ID is required");
+        }
         return expenseRepository.save(expense);
     }
 

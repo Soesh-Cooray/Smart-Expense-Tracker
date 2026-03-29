@@ -226,19 +226,30 @@ export default function ExpensePage({ onOpenSidebar }) {
   const [viewingExpense, setViewingExpense] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
-  const userId = 1 // Default user ID - change if needed
+  const [userId, setUserId] = useState(null)
 
   // Fetch expenses on mount
   useEffect(() => {
-    fetchExpenses()
+    const storedUserId = localStorage.getItem('userId')
+    if (storedUserId) {
+      setUserId(parseInt(storedUserId))
+      fetchExpenses(storedUserId)
+    } else {
+      setError('User not logged in. Please log in first.')
+      setLoading(false)
+    }
   }, [])
 
-  async function fetchExpenses() {
+  async function fetchExpenses(userIdParam) {
     try {
       setLoading(true)
       setError('')
-      const response = await fetch(API_BASE_URL)
+      const id = userIdParam || userId
+      if (!id) {
+        setError('User ID not found. Please log in again.')
+        return
+      }
+      const response = await fetch(`${API_BASE_URL}/user/${id}`)
       if (!response.ok) throw new Error('Failed to fetch expenses')
       const data = await response.json()
       setExpenseList(Array.isArray(data) ? data : [])

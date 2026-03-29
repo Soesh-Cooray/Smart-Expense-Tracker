@@ -1,6 +1,7 @@
 package org.example.smart_expense_tracker.Service;
 
-import lombok.RequiredArgsConstructor;
+import java.security.SecureRandom;
+
 import org.example.smart_expense_tracker.Controller.LoginRequest;
 import org.example.smart_expense_tracker.Controller.RegisterRequest;
 import org.example.smart_expense_tracker.Model.Users;
@@ -8,7 +9,7 @@ import org.example.smart_expense_tracker.Repository.Auth;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -49,7 +50,7 @@ public class AuthService {
         return "Account verified successfully.";
     }
 
-    public String loginUser(LoginRequest request) {
+    public Users loginUser(LoginRequest request) {
         Users user = authRepository.findByUsername(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid email or password."));
 
@@ -61,6 +62,6 @@ public class AuthService {
             throw new RuntimeException("Please verify your email before logging in.");
         }
 
-        return "Login successful";
+        return user;
     }
 }
