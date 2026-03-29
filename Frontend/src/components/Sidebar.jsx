@@ -8,7 +8,7 @@ const navItems = [
   { id: 'income',    label: 'Income',    icon: '📈',  path: '/income' },
   { id: 'budgets',   label: 'Budgets',   icon: '📊',  path: '/dashboard?tab=budgets' },
   { id: 'goals',     label: 'Goals',     icon: '🎯',  path: '/goals' },
-  { id: 'settings',  label: 'Settings',  icon: '⚙',   path: '/dashboard?tab=settings' },
+  { id: 'settings',  label: 'Settings',  icon: '⚙',   path: '/settings' },
 ]
 
 /**
