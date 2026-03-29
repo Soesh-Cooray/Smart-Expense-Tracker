@@ -12,7 +12,9 @@ import {
   Filler,
 } from 'chart.js'
 import { Doughnut, Line, Bar } from 'react-chartjs-2'
+import { useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
+import IncomePage from './components/income/IncomePage'
 import './Dashboard.css'
 
 ChartJS.register(
@@ -253,19 +255,74 @@ function GoalCard({ g }) {
 // ── main component ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [activeNav, setActiveNav] = useState('overview')
+  const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const params = new URLSearchParams(location.search)
+  const tab = params.get('tab')
+  const validTabs = new Set(['overview', 'expenses', 'income', 'budgets', 'settings'])
+  const activeNav = validTabs.has(tab) ? tab : 'overview'
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
   const categoryColors = ['#1d4ed8', '#16a34a', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4']
   const categoryLabels = doughnutData.labels
 
+  if (activeNav === 'income') {
+    return (
+      <div className="db-root">
+        <Sidebar
+          activeNav={activeNav}
+          onNavChange={() => {}}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+
+        <main className="db-main">
+          <IncomePage onOpenSidebar={() => setSidebarOpen(true)} />
+        </main>
+      </div>
+    )
+  }
+
+  if (activeNav !== 'overview') {
+    return (
+      <div className="db-root">
+        <Sidebar
+          activeNav={activeNav}
+          onNavChange={() => {}}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+
+        <main className="db-main">
+          <header className="db-header">
+            <div className="db-header-left">
+              <button className="db-hamburger" type="button" onClick={() => setSidebarOpen(true)}>☰</button>
+              <div>
+                <h1 className="db-title">{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</h1>
+                <p className="db-subtitle">This section is under construction.</p>
+              </div>
+            </div>
+          </header>
+
+          <section className="db-card">
+            <div className="db-card-header" style={{ marginBottom: 8 }}>
+              <h3>Coming Soon</h3>
+            </div>
+            <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>
+              Switch to Income from the sidebar to use the new dynamic CRUD page with chart visualization.
+            </p>
+          </section>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="db-root">
       <Sidebar
         activeNav={activeNav}
-        onNavChange={setActiveNav}
+        onNavChange={() => {}}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
