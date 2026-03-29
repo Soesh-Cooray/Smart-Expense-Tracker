@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import {
   Chart as ChartJS,
@@ -187,7 +187,7 @@ export default function Dashboard() {
     return storedUserId ? parseInt(storedUserId, 10) : null
   })
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     if (!userId) return
     setLoadingData(true)
     try {
@@ -218,11 +218,11 @@ export default function Dashboard() {
     } finally {
       setLoadingData(false)
     }
-  }
+  }, [userId])
 
   useEffect(() => {
     fetchDashboardData()
-  }, [userId])
+  }, [fetchDashboardData])
 
   const monthlyExpenses = useMemo(() => {
     const now = new Date()

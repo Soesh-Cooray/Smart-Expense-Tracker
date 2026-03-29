@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.example.smart_expense_tracker.Model.Expense;
 import org.example.smart_expense_tracker.Service.ExpenseService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -22,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/expenses")
 @CrossOrigin(origins = "http://localhost:5173")
 public class ExpenseController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExpenseController.class);
 
     private final ExpenseService expenseService;
 
@@ -53,7 +57,7 @@ public class ExpenseController {
             Expense saved = expenseService.createExpense(expense);
             return ResponseEntity.status(HttpStatus.CREATED).body(saved);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Error creating expense", e);
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             error.put("type", e.getClass().getSimpleName());
@@ -67,7 +71,7 @@ public class ExpenseController {
             Expense updated = expenseService.updateExpense(id, expense);
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Error updating expense with id {}", id, e);
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
