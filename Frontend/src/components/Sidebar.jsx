@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import './Sidebar.css'
 
 const navItems = [
-  { id: 'overview',  label: 'Overview',  icon: '⊞',  path: '/dashboard' },
+  { id: 'overview',  label: 'Dashboard',  icon: '⊞',  path: '/dashboard' },
   { id: 'expenses',  label: 'Expenses',  icon: '📉',  path: '/dashboard?tab=expenses' },
   { id: 'income',    label: 'Income',    icon: '📈',  path: '/dashboard?tab=income' },
   { id: 'budgets',   label: 'Budgets',   icon: '📊',  path: '/dashboard?tab=budgets' },
