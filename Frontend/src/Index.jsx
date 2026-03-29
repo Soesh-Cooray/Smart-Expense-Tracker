@@ -1,6 +1,45 @@
 import { useNavigate } from 'react-router-dom'
 import './Index.css'
 
+const MODULES = [
+  {
+    title: 'Authentication & Account Verification',
+    icon: '🔐',
+    details: 'Secure sign up, login, and account verification flow to protect user access.',
+    points: ['Signup and login screens', 'Verification step before full access', 'Protected dashboard entry'],
+  },
+  {
+    title: 'Financial Dashboard',
+    icon: '📊',
+    details: 'Centralized overview with balance KPIs, spending charts, savings trend, and recent transactions.',
+    points: ['KPI cards for balance, income, expenses, savings rate', 'Expense breakdown and income-vs-expense charts', 'Budget tracker with progress indicators'],
+  },
+  {
+    title: 'Income Management Module',
+    icon: '💸',
+    details: 'Complete income tracking with add, edit, delete, filters, chart analytics, and detail views.',
+    points: ['Income CRUD with validation', 'Category and search filtering', 'Six-month trend visualization'],
+  },
+  {
+    title: 'Subscription Management Module',
+    icon: '📱',
+    details: 'Track recurring payments and manage active subscriptions with real-time total cost summaries.',
+    points: ['Add, update, and delete subscriptions', 'Billing cycle and status tracking', 'Total recurring amount calculation'],
+  },
+  {
+    title: 'Savings Goals Module',
+    icon: '🎯',
+    details: 'Create personalized goals, monitor progress, and visualize goal completion timelines.',
+    points: ['Goal CRUD with progress bars', 'Due date urgency indicators', 'Distribution and completion charts'],
+  },
+  {
+    title: 'AI Insights & Smart Alerts',
+    icon: '🤖',
+    details: 'AI-ready architecture to generate insights, detect patterns, and recommend better decisions.',
+    points: ['Spending behavior insights', 'Bill reminders and smart alerts', 'Future prediction and recommendation potential'],
+  },
+]
+
 function Index() {
   const navigate = useNavigate()
   return (
@@ -111,6 +150,30 @@ function Index() {
             <p>You are on track to reach your House Deposit goal 3 months earlier than expected.</p>
             <small>Goal Tracking Active</small>
           </article>
+        </div>
+      </section>
+
+      <section className="modules">
+        <h2>Platform Modules</h2>
+        <p className="section-subtitle">
+          Smart Expense Tracker is built as connected modules so you can manage every part of your personal finance workflow.
+        </p>
+
+        <div className="module-grid">
+          {MODULES.map((module) => (
+            <article className="module-card" key={module.title}>
+              <div className="module-head">
+                <span className="module-icon">{module.icon}</span>
+                <h3>{module.title}</h3>
+              </div>
+              <p>{module.details}</p>
+              <ul>
+                {module.points.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+            </article>
+          ))}
         </div>
       </section>
 

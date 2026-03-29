@@ -297,6 +297,78 @@ body {
   gap: 18px;
 }
 
+.modules {
+  margin-top: 90px;
+}
+
+.modules h2 {
+  margin: 0;
+  font-size: 40px;
+  text-align: center;
+}
+
+.modules .section-subtitle {
+  text-align: center;
+  max-width: 760px;
+}
+
+.module-grid {
+  margin-top: 34px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.module-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.module-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.module-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #dbeafe;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.module-card h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.module-card p {
+  margin: 0 0 12px;
+  color: #64748b;
+  line-height: 1.7;
+}
+
+.module-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.module-card li {
+  line-height: 1.5;
+}
+
 .insight-card {
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -454,6 +526,10 @@ body {
   }
 
   .insight-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .module-grid {
     grid-template-columns: 1fr;
   }
 
