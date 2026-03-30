@@ -8,7 +8,8 @@ import Signup from './components/auth/Signup.jsx'
 import VerifyAccount from './components/auth/VerifyAccount.jsx'
 import Dashboard from './Dashboard.jsx'
 import SavingsGoals from './components/savings/SavingsGoals.jsx'
-import { ExpensesHome } from "./components/expenses";
+import IncomeLayout from './components/income/IncomeLayout.jsx'
+import ExpenseLayout from './components/expenses/ExpenseLayout.jsx'
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
@@ -20,7 +21,8 @@ createRoot(document.getElementById('root')).render(
           <Route path="/verify" element={<VerifyAccount />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/goals" element={<SavingsGoals />} />
-          <Route path="/expenses" element={<ExpensesHome />} />
+          <Route path="/income" element={<IncomeLayout />} />
+          <Route path="/expenses" element={<ExpenseLayout />} />
         </Routes>
       </BrowserRouter>
     </StrictMode>,

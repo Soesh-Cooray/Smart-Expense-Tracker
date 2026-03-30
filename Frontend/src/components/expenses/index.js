@@ -1,1 +1,0 @@
-export { default as ExpensesHome } from "./pages/ExpensesHome";

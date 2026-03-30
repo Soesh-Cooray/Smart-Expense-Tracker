@@ -3,8 +3,8 @@ import './Sidebar.css'
 
 const navItems = [
   { id: 'overview',  label: 'Dashboard',  icon: '⊞',  path: '/dashboard' },
-  { id: 'expenses',  label: 'Expenses',  icon: '📉',  path: '/dashboard?tab=expenses' },
-  { id: 'income',    label: 'Income',    icon: '📈',  path: '/dashboard?tab=income' },
+  { id: 'expenses',  label: 'Expenses',  icon: '📉',  path: '/expenses' },
+  { id: 'income',    label: 'Income',    icon: '📈',  path: '/income' },
   { id: 'budgets',   label: 'Budgets',   icon: '📊',  path: '/dashboard?tab=budgets' },
   { id: 'goals',     label: 'Goals',     icon: '🎯',  path: '/goals' },
   { id: 'settings',  label: 'Settings',  icon: '⚙',   path: '/dashboard?tab=settings' },
