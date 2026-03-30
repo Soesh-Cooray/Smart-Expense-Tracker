@@ -430,6 +430,312 @@
   background: #ef4444 !important;
 }
 
+/* ── Subscriptions ──────────────────────────────────────────────────────── */
+
+.db-subscriptions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.db-subscription-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+  border-radius: 10px;
+  border: 1px solid #dbeafe;
+  transition: all 0.3s ease;
+}
+
+.db-subscription-item:hover {
+  background: linear-gradient(135deg, #e0f2fe 0%, #ecf9ff 100%);
+  border-color: #bfdbfe;
+  box-shadow: 0 4px 12px rgba(0, 122, 204, 0.1);
+  transform: translateY(-2px);
+}
+
+.db-sub-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+}
+
+.db-sub-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #dbeafe;
+  border-radius: 8px;
+}
+
+.db-sub-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.db-sub-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0c4a6e;
+  margin: 0;
+}
+
+.db-sub-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.db-sub-category {
+  font-size: 12px;
+  color: #0369a1;
+  font-weight: 500;
+}
+
+.db-sub-status {
+  font-size: 11px;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.db-sub-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.db-sub-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.db-sub-price {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0d47a1;
+  margin: 0;
+}
+
+.db-sub-cycle {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.db-sub-footer {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #dbeafe 0%, #bae6fd 100%);
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.db-sub-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #0c4a6e;
+  font-weight: 600;
+}
+
+.db-sub-total-amount {
+  font-size: 18px;
+  color: #0369a1;
+  font-weight: 800;
+}
+
+.db-empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.db-empty-icon {
+  font-size: 48px;
+  margin: 0;
+  opacity: 0.7;
+}
+
+.db-empty-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0;
+}
+
+.db-empty-hint {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.db-loading {
+  padding: 24px;
+  text-align: center;
+  color: #0369a1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.db-loading p {
+  margin: 0;
+}
+
+/* ── Subscription Form ────────────────────────────────────────────────────── */
+
+.db-sub-form {
+  padding: 18px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.db-sub-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.db-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.db-sub-form input,
+.db-sub-form select {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  background: white;
+  color: #111827;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.db-sub-form input:focus,
+.db-sub-form select:focus {
+  outline: none;
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+}
+
+.db-sub-form input::placeholder {
+  color: #9ca3af;
+}
+
+.db-form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.db-btn-submit,
+.db-btn-cancel {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.db-btn-submit {
+  background: #1d4ed8;
+  color: white;
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.3);
+}
+
+.db-btn-submit:hover {
+  background: #1840b4;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.4);
+  transform: translateY(-1px);
+}
+
+.db-btn-cancel {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.db-btn-cancel:hover {
+  background: #d1d5db;
+}
+
+/* Subscription Item Actions */
+.db-sub-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.db-sub-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  opacity: 0;
+  background: transparent;
+}
+
+.db-subscription-item:hover .db-sub-btn {
+  opacity: 1;
+}
+
+.db-sub-edit {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.db-sub-edit:hover {
+  background: rgba(59, 130, 246, 0.2);
+  transform: scale(1.1);
+}
+
+.db-sub-delete {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.db-sub-delete:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.1);
+}
+
 /* ── Bottom row: goals + transactions ────────────────────────────────────────── */
 
 .db-bot-row {

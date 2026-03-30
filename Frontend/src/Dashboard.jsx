@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useEffect } from 'react'
+import axios from 'axios'
 import {
   Chart as ChartJS,
   ArcElement,
@@ -12,7 +14,9 @@ import {
   Filler,
 } from 'chart.js'
 import { Doughnut, Line, Bar } from 'react-chartjs-2'
+import { useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
+import IncomePage from './components/income/IncomePage'
 import './Dashboard.css'
 
 ChartJS.register(
@@ -253,22 +257,206 @@ function GoalCard({ g }) {
 // ── main component ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [activeNav, setActiveNav] = useState('overview')
+  const location = useLocation()
+  const activeNav = new URLSearchParams(location.search).get('tab') || 'overview'
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [subscriptions, setSubscriptions] = useState([])
+  const [totalSubscriptions, setTotalSubscriptions] = useState(0)
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false)
+  
+  // Form state for CRUD
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [formData, setFormData] = useState({
+    name: '',
+    category: '',
+    amount: '',
+    billingCycle: 'Monthly',
+    startDate: '',
+    nextPaymentDate: '',
+    status: 'Active'
+  })
+
+  const userId = 1 // Default user ID - change if needed
+
+  // Fetch subscriptions from backend
+  const fetchSubscriptions = async () => {
+    setLoadingSubscriptions(true)
+    try {
+      const response = await axios.get(`http://localhost:8080/api/subscriptions/user/${userId}`)
+      setSubscriptions(response.data)
+      
+      // Calculate total
+      const total = response.data.reduce((sum, sub) => sum + (sub.amount || 0), 0)
+      setTotalSubscriptions(total)
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error)
+      setSubscriptions([])
+      setTotalSubscriptions(0)
+    } finally {
+      setLoadingSubscriptions(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSubscriptions()
+  }, [])
+
+  // Handle form input change
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  // Handle Create/Update subscription
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      if (editingId) {
+        // Update
+        await axios.put(`http://localhost:8080/api/subscriptions/${editingId}`, {
+          ...formData,
+          userId,
+          amount: parseFloat(formData.amount)
+        })
+      } else {
+        // Create
+        await axios.post(`http://localhost:8080/api/subscriptions`, {
+          ...formData,
+          userId,
+          amount: parseFloat(formData.amount)
+        })
+      }
+      
+      // Reset form
+      setFormData({
+        name: '',
+        category: '',
+        amount: '',
+        billingCycle: 'Monthly',
+        startDate: '',
+        nextPaymentDate: '',
+        status: 'Active'
+      })
+      setEditingId(null)
+      setShowForm(false)
+      fetchSubscriptions()
+    } catch (error) {
+      console.error('Error saving subscription:', error)
+      alert('Error saving subscription. Please try again.')
+    }
+  }
+
+  // Handle Edit
+  const handleEdit = (subscription) => {
+    setFormData({
+      name: subscription.name,
+      category: subscription.category,
+      amount: subscription.amount,
+      billingCycle: subscription.billingCycle,
+      startDate: subscription.startDate,
+      nextPaymentDate: subscription.nextPaymentDate,
+      status: subscription.status
+    })
+    setEditingId(subscription.id)
+    setShowForm(true)
+  }
+
+  // Handle Delete
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this subscription?')) {
+      try {
+        await axios.delete(`http://localhost:8080/api/subscriptions/${id}`)
+        fetchSubscriptions()
+      } catch (error) {
+        console.error('Error deleting subscription:', error)
+        alert('Error deleting subscription. Please try again.')
+      }
+    }
+  }
+
+  // Handle Cancel
+  const handleCancel = () => {
+    setFormData({
+      name: '',
+      category: '',
+      amount: '',
+      billingCycle: 'Monthly',
+      startDate: '',
+      nextPaymentDate: '',
+      status: 'Active'
+    })
+    setEditingId(null)
+    setShowForm(false)
+  }
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
   const categoryColors = ['#1d4ed8', '#16a34a', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4']
   const categoryLabels = doughnutData.labels
 
-  return (
+  if (activeNav === 'income') {
+    return (
       <div className="db-root">
         <Sidebar
-            activeNav={activeNav}
-            onNavChange={setActiveNav}
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
+          activeNav={activeNav}
+          onNavChange={() => {}}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
+
+        <main className="db-main">
+          <IncomePage onOpenSidebar={() => setSidebarOpen(true)} />
+        </main>
+      </div>
+    )
+  }
+
+  if (activeNav !== 'overview') {
+    return (
+      <div className="db-root">
+        <Sidebar
+          activeNav={activeNav}
+          onNavChange={() => {}}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+
+        <main className="db-main">
+          <header className="db-header">
+            <div className="db-header-left">
+              <button className="db-hamburger" type="button" onClick={() => setSidebarOpen(true)}>☰</button>
+              <div>
+                <h1 className="db-title">{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</h1>
+                <p className="db-subtitle">This section is under construction.</p>
+              </div>
+            </div>
+          </header>
+
+          <section className="db-card">
+            <div className="db-card-header" style={{ marginBottom: 8 }}>
+              <h3>Coming Soon</h3>
+            </div>
+            <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>
+              Switch to Income from the sidebar to use the new dynamic CRUD page with chart visualization.
+            </p>
+          </section>
+        </main>
+      </div>
+    )
+  }
+
+  return (
+    <div className="db-root">
+      <Sidebar
+        activeNav={activeNav}
+        onNavChange={() => {}}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
         {/* ── Main area ── */}
         <main className="db-main">
@@ -348,17 +536,171 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Budget tracker */}
-            <div className="db-card db-budget-card">
-              <div className="db-card-header">
-                <h3>Budget Tracker</h3>
-                <span className="db-card-tag">Feb 2025</span>
-              </div>
-              <div className="db-budget-list">
-                {budgets.map((b) => <BudgetRow key={b.category} b={b} />)}
-              </div>
+          {/* Budget tracker */}
+          <div className="db-card db-budget-card">
+            <div className="db-card-header">
+              <h3>Budget Tracker</h3>
+              <span className="db-card-tag">Feb 2025</span>
             </div>
-          </section>
+            <div className="db-budget-list">
+              {budgets.map((b) => <BudgetRow key={b.category} b={b} />)}
+            </div>
+          </div>
+
+          {/* Subscriptions */}
+          <div className="db-card db-budget-card">
+            <div className="db-card-header">
+              <h3>📱 Active Subscriptions</h3>
+              <button 
+                className="db-text-btn"
+                type="button"
+                onClick={() => {
+                  if (showForm && !editingId) {
+                    setShowForm(false)
+                  } else {
+                    setEditingId(null)
+                    setFormData({
+                      name: '',
+                      category: '',
+                      amount: '',
+                      billingCycle: 'Monthly',
+                      startDate: '',
+                      nextPaymentDate: '',
+                      status: 'Active'
+                    })
+                    setShowForm(true)
+                  }
+                }}
+              >
+                {showForm && !editingId ? '✕ Cancel' : '+ Add Subscription'}
+              </button>
+            </div>
+
+            {/* Add/Edit Form */}
+            {showForm && (
+              <div className="db-sub-form">
+                <form onSubmit={handleSubmit}>
+                  <div className="db-form-grid">
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Subscription Name (e.g., Netflix)"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <input
+                      type="text"
+                      name="category"
+                      placeholder="Category (e.g., Entertainment)"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                    />
+                    <input
+                      type="number"
+                      name="amount"
+                      placeholder="Amount"
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <select name="billingCycle" value={formData.billingCycle} onChange={handleInputChange}>
+                      <option value="Monthly">Monthly</option>
+                      <option value="Yearly">Yearly</option>
+                      <option value="Weekly">Weekly</option>
+                    </select>
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={formData.startDate}
+                      onChange={handleInputChange}
+                    />
+                    <input
+                      type="date"
+                      name="nextPaymentDate"
+                      value={formData.nextPaymentDate}
+                      onChange={handleInputChange}
+                    />
+                    <select name="status" value={formData.status} onChange={handleInputChange}>
+                      <option value="Active">Active</option>
+                      <option value="Cancelled">Cancelled</option>
+                      <option value="Paused">Paused</option>
+                    </select>
+                  </div>
+                  <div className="db-form-actions">
+                    <button type="submit" className="db-btn-submit">
+                      {editingId ? '✏️ Update' : '➕ Add'} Subscription
+                    </button>
+                    <button type="button" className="db-btn-cancel" onClick={handleCancel}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Subscriptions List */}
+            {loadingSubscriptions ? (
+              <div className="db-loading">
+                <p>⏳ Loading subscriptions...</p>
+              </div>
+            ) : subscriptions.length > 0 ? (
+              <>
+                <div className="db-subscriptions-list">
+                  {subscriptions.map((sub) => (
+                    <div key={sub.id} className="db-subscription-item">
+                      <div className="db-sub-left">
+                        <div className="db-sub-icon">🔔</div>
+                        <div className="db-sub-info">
+                          <p className="db-sub-name">{sub.name}</p>
+                          <div className="db-sub-meta">
+                            <span className="db-sub-category">📂 {sub.category}</span>
+                            <span className="db-sub-status">● {sub.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="db-sub-right">
+                        <div className="db-sub-amount">
+                          <p className="db-sub-price">Rs.{sub.amount}</p>
+                          <span className="db-sub-cycle">📅 {sub.billingCycle}</span>
+                        </div>
+                        <div className="db-sub-actions">
+                          <button 
+                            className="db-sub-btn db-sub-edit"
+                            onClick={() => handleEdit(sub)}
+                            title="Edit"
+                          >
+                            ✏️
+                          </button>
+                          <button 
+                            className="db-sub-btn db-sub-delete"
+                            onClick={() => handleDelete(sub.id)}
+                            title="Delete"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="db-sub-footer">
+                  <div className="db-sub-summary">
+                    <span>Total {subscriptions.length} Subscriptions</span>
+                    <strong className="db-sub-total-amount">Rs.{totalSubscriptions.toFixed(2)}</strong>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="db-empty-state">
+                <p className="db-empty-icon">📭</p>
+                <p className="db-empty-text">No active subscriptions yet</p>
+                <p className="db-empty-hint">Add subscriptions to track your recurring expenses</p>
+              </div>
+            )}
+          </div>
+        </section>
 
           {/* Savings goals + recent transactions row */}
           <section className="db-bot-row">
