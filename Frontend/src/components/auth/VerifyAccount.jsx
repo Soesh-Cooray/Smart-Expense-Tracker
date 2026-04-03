@@ -5,7 +5,6 @@ import './Auth.css'
 const API_BASE = 'http://localhost:8080'
 const CODE_LENGTH = 6
 
-// ── left panel ────────────────────────────────────────────────────────────────
 
 function LeftPanel() {
   return (
@@ -40,7 +39,7 @@ function LeftPanel() {
   )
 }
 
-// ── main component ────────────────────────────────────────────────────────────
+
 
 export default function VerifyAccount() {
   const navigate = useNavigate()

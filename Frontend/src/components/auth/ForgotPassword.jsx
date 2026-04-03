@@ -65,6 +65,7 @@ export default function ForgotPassword() {
   const [formError, setFormError] = useState('')
   const [success, setSuccess] = useState('')
   const pwStrength = getPasswordStrength(newPassword)
+  const isPasswordStrong = pwStrength.score === 4
 
   const strengthSegClass = (idx) => {
     if (pwStrength.score > idx) return `auth-pw-strength-seg filled-${pwStrength.cls}`
@@ -115,6 +116,10 @@ export default function ForgotPassword() {
     }
     if (newPassword.length < 8) {
       setFormError('New password must be at least 8 characters.')
+      return
+    }
+    if (pwStrength.score < 4) {
+      setFormError('New password must be strong (8+ chars with uppercase, number, and symbol).')
       return
     }
     if (newPassword !== confirmPassword) {
@@ -252,7 +257,7 @@ export default function ForgotPassword() {
                   </div>
                 </div>
 
-                <button type="submit" className="auth-submit" disabled={submitting}>
+                <button type="submit" className="auth-submit" disabled={submitting || !isPasswordStrong}>
                   {submitting ? 'Resetting…' : 'Reset Password'}
                 </button>
               </form>

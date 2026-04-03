@@ -4,8 +4,6 @@ import './Auth.css'
 
 const API_BASE = 'http://localhost:8080'
 
-// ── helpers ───────────────────────────────────────────────────────────────────
-
 function getPasswordStrength(pw) {
   if (!pw) return { score: 0, label: '', cls: '' }
   let score = 0
@@ -44,8 +42,6 @@ function validate(fields) {
   return errors
 }
 
-// ── left panel ────────────────────────────────────────────────────────────────
-
 function LeftPanel() {
   return (
     <div className="auth-left">
@@ -83,8 +79,6 @@ function LeftPanel() {
   )
 }
 
-// ── main component ────────────────────────────────────────────────────────────
-
 export default function Signup() {
   const navigate = useNavigate()
 
@@ -103,6 +97,7 @@ export default function Signup() {
   const [formError, setFormError]             = useState('')
 
   const pwStrength = getPasswordStrength(fields.password)
+  const isPasswordStrong = pwStrength.score === 4
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -114,6 +109,10 @@ export default function Signup() {
   async function handleSubmit(e) {
     e.preventDefault()
     const validation = validate(fields)
+    const passwordStrength = getPasswordStrength(fields.password)
+    if (passwordStrength.score < 4) {
+      validation.password = 'Password must be strong (8+ chars with uppercase, number, and symbol).'
+    }
     if (Object.keys(validation).length) { setErrors(validation); return }
     if (!agreedToTerms) { setTermsError('You must agree to the terms to continue.'); return }
     setTermsError('')
@@ -168,7 +167,6 @@ export default function Signup() {
             )}
 
             <form onSubmit={handleSubmit} noValidate>
-              {/* Full name */}
               <div className="auth-field">
                 <label htmlFor="su-fullname">Full name</label>
                 <div className="auth-input-wrap">
@@ -187,7 +185,7 @@ export default function Signup() {
                 {errors.fullName && <p className="auth-field-error">{errors.fullName}</p>}
               </div>
 
-              {/* Email */}
+
               <div className="auth-field">
                 <label htmlFor="su-email">Email address</label>
                 <div className="auth-input-wrap">
@@ -206,7 +204,6 @@ export default function Signup() {
                 {errors.email && <p className="auth-field-error">{errors.email}</p>}
               </div>
 
-              {/* Password */}
               <div className="auth-field">
                 <label htmlFor="su-password">Password</label>
                 <div className="auth-input-wrap">
@@ -247,7 +244,7 @@ export default function Signup() {
                 )}
               </div>
 
-              {/* Confirm password */}
+
               <div className="auth-field">
                 <label htmlFor="su-confirm">Confirm password</label>
                 <div className="auth-input-wrap">
@@ -276,7 +273,7 @@ export default function Signup() {
                 )}
               </div>
 
-              {/* Terms */}
+
               <div className="auth-checkbox-row">
                 <input
                   id="su-terms"
@@ -295,7 +292,7 @@ export default function Signup() {
               </div>
               {termsError && <p className="auth-field-error" style={{ marginTop: -12, marginBottom: 16 }}>{termsError}</p>}
 
-              <button type="submit" className="auth-submit" disabled={submitting}>
+              <button type="submit" className="auth-submit" disabled={submitting || !isPasswordStrong}>
                 {submitting ? 'Creating account…' : 'Create free account'}
               </button>
             </form>

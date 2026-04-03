@@ -4,8 +4,6 @@ import './Auth.css'
 
 const API_BASE = 'http://localhost:8080'
 
-// ── helpers ──────────────────────────────────────────────────────────────────
-
 function validate(fields) {
   const errors = {}
   if (!fields.email.trim()) {
@@ -20,8 +18,6 @@ function validate(fields) {
   }
   return errors
 }
-
-// ── left panel ────────────────────────────────────────────────────────────────
 
 function LeftPanel() {
   return (
@@ -56,7 +52,6 @@ function LeftPanel() {
   )
 }
 
-// ── main component ────────────────────────────────────────────────────────────
 
 export default function Login() {
   const navigate = useNavigate()

@@ -31,6 +31,7 @@ export default function SettingsPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const pwStrength = getPasswordStrength(newPassword)
+  const isPasswordStrong = pwStrength.score === 4
 
   const storedUserId = localStorage.getItem('userId')
   const userId = storedUserId ? parseInt(storedUserId, 10) : null
@@ -86,6 +87,11 @@ export default function SettingsPage() {
 
     if (newPassword.length < 8) {
       setError('New password must be at least 8 characters.')
+      return
+    }
+
+    if (pwStrength.score < 4) {
+      setError('New password must be strong (8+ chars with uppercase, number, and symbol).')
       return
     }
 
@@ -232,7 +238,7 @@ export default function SettingsPage() {
                 </span>
               </div>
             )}
-            <button className="settings-btn primary" type="submit" disabled={loading}>Update Password</button>
+            <button className="settings-btn primary" type="submit" disabled={loading || !isPasswordStrong}>Update Password</button>
           </form>
         </section>
 
