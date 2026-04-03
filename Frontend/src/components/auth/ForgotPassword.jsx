@@ -4,6 +4,23 @@ import './Auth.css'
 
 const API_BASE = 'http://localhost:8080'
 
+function getPasswordStrength(pw) {
+  if (!pw) return { score: 0, label: '', cls: '' }
+  let score = 0
+  if (pw.length >= 8) score++
+  if (/[A-Z]/.test(pw)) score++
+  if (/[0-9]/.test(pw)) score++
+  if (/[^A-Za-z0-9]/.test(pw)) score++
+  const map = [
+    { label: 'Weak', cls: 'weak' },
+    { label: 'Weak', cls: 'weak' },
+    { label: 'Fair', cls: 'fair' },
+    { label: 'Good', cls: 'good' },
+    { label: 'Strong', cls: 'strong' },
+  ]
+  return { score, ...map[score] }
+}
+
 function LeftPanel() {
   return (
     <div className="auth-left">
@@ -47,6 +64,12 @@ export default function ForgotPassword() {
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
   const [success, setSuccess] = useState('')
+  const pwStrength = getPasswordStrength(newPassword)
+
+  const strengthSegClass = (idx) => {
+    if (pwStrength.score > idx) return `auth-pw-strength-seg filled-${pwStrength.cls}`
+    return 'auth-pw-strength-seg'
+  }
 
   async function handleSendCode(e) {
     e.preventDefault()
@@ -90,8 +113,8 @@ export default function ForgotPassword() {
       setFormError('Reset code is required.')
       return
     }
-    if (newPassword.length < 6) {
-      setFormError('New password must be at least 6 characters.')
+    if (newPassword.length < 8) {
+      setFormError('New password must be at least 8 characters.')
       return
     }
     if (newPassword !== confirmPassword) {
@@ -192,12 +215,24 @@ export default function ForgotPassword() {
                       className="auth-input"
                       type="password"
                       name="newPassword"
-                      placeholder="Min. 6 characters"
+                      placeholder="Min. 8 characters"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       autoComplete="new-password"
                     />
                   </div>
+                  {newPassword && (
+                    <div className="auth-pw-strength">
+                      <div className="auth-pw-strength-bar">
+                        {[0, 1, 2, 3].map((i) => (
+                          <div key={i} className={strengthSegClass(i)} />
+                        ))}
+                      </div>
+                      <span className={`auth-pw-strength-label ${pwStrength.cls}`}>
+                        {pwStrength.label} password
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="auth-field">

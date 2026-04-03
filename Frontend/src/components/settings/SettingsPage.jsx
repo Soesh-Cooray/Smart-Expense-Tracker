@@ -4,6 +4,23 @@ import './SettingsPage.css'
 
 const API_BASE = 'http://localhost:8080'
 
+function getPasswordStrength(pw) {
+  if (!pw) return { score: 0, label: '', cls: '' }
+  let score = 0
+  if (pw.length >= 8) score++
+  if (/[A-Z]/.test(pw)) score++
+  if (/[0-9]/.test(pw)) score++
+  if (/[^A-Za-z0-9]/.test(pw)) score++
+  const map = [
+    { label: 'Weak', cls: 'weak' },
+    { label: 'Weak', cls: 'weak' },
+    { label: 'Fair', cls: 'fair' },
+    { label: 'Good', cls: 'good' },
+    { label: 'Strong', cls: 'strong' },
+  ]
+  return { score, ...map[score] }
+}
+
 export default function SettingsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [name, setName] = useState(localStorage.getItem('userName') || '')
@@ -13,9 +30,15 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const pwStrength = getPasswordStrength(newPassword)
 
   const storedUserId = localStorage.getItem('userId')
   const userId = storedUserId ? parseInt(storedUserId, 10) : null
+
+  const strengthSegClass = (idx) => {
+    if (pwStrength.score > idx) return `settings-pw-strength-seg filled-${pwStrength.cls}`
+    return 'settings-pw-strength-seg'
+  }
 
   async function handleNameUpdate(e) {
     e.preventDefault()
@@ -61,8 +84,8 @@ export default function SettingsPage() {
       return
     }
 
-    if (newPassword.length < 6) {
-      setError('New password must be at least 6 characters.')
+    if (newPassword.length < 8) {
+      setError('New password must be at least 8 characters.')
       return
     }
 
@@ -194,9 +217,21 @@ export default function SettingsPage() {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New password (min 6 chars)"
+              placeholder="New password (min 8 chars)"
               required
             />
+            {newPassword && (
+              <div className="settings-pw-strength">
+                <div className="settings-pw-strength-bar">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className={strengthSegClass(i)} />
+                  ))}
+                </div>
+                <span className={`settings-pw-strength-label ${pwStrength.cls}`}>
+                  {pwStrength.label} password
+                </span>
+              </div>
+            )}
             <button className="settings-btn primary" type="submit" disabled={loading}>Update Password</button>
           </form>
         </section>
