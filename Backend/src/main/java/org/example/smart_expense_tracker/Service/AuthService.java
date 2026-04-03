@@ -176,6 +176,7 @@ public class AuthService {
         expenseRepository.deleteByUserId(id);
         savingsGoalRepository.deleteByUserId(id);
         subscriptionRepository.deleteByUserId(id);
+        authRepository.deleteIncomeByUserId(id);
         authRepository.deleteById(userId);
     }
 }
