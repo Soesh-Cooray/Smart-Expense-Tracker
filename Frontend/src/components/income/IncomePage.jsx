@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { useMemo, useState } from 'react'
-=======
 import { useCallback, useEffect, useMemo, useState } from 'react'
->>>>>>> main
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -18,52 +14,6 @@ import './IncomePage.css'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
 
-<<<<<<< HEAD
-const ICONS = ['💼', '💰', '🏦', '💳', '📱', '🎁', '🧾', '📊', '🚀', '🪙']
-const CATEGORIES = ['Salary', 'Freelance', 'Business', 'Investments', 'Bonus', 'Other']
-const PAYMENT_METHODS = ['Bank Transfer', 'Cash', 'Card', 'Mobile Wallet']
-
-const INITIAL_INCOME = [
-  {
-    id: 1,
-    name: 'Monthly Salary',
-    amount: 180000,
-    date: '2026-03-01',
-    category: 'Salary',
-    paymentMethod: 'Bank Transfer',
-    icon: '💼',
-    note: 'Main company salary',
-  },
-  {
-    id: 2,
-    name: 'Freelance UI Project',
-    amount: 45000,
-    date: '2026-03-03',
-    category: 'Freelance',
-    paymentMethod: 'Bank Transfer',
-    icon: '🚀',
-    note: 'Landing page redesign milestone',
-  },
-  {
-    id: 3,
-    name: 'Stock Dividend',
-    amount: 9000,
-    date: '2026-03-05',
-    category: 'Investments',
-    paymentMethod: 'Mobile Wallet',
-    icon: '📊',
-    note: 'Quarterly payout',
-  },
-]
-
-const EMPTY_FORM = {
-  name: '',
-  amount: '',
-  date: new Date().toISOString().slice(0, 10),
-  category: CATEGORIES[0],
-  paymentMethod: PAYMENT_METHODS[0],
-  icon: ICONS[0],
-=======
 const CATEGORIES = ['Salary', 'Freelance', 'Business', 'Investments', 'Bonus', 'Other']
 const API_BASE_URL = 'http://localhost:8080/api/income'
 
@@ -73,7 +23,6 @@ const EMPTY_FORM = {
   amount: '',
   date: new Date().toISOString().slice(0, 10),
   category: CATEGORIES[0],
->>>>>>> main
   note: '',
 }
 
@@ -106,8 +55,6 @@ function buildMonthBuckets(records, monthCount = 6) {
   return months
 }
 
-<<<<<<< HEAD
-=======
 function normalizeIncomeRecord(income) {
   return {
     ...income,
@@ -115,7 +62,6 @@ function normalizeIncomeRecord(income) {
   }
 }
 
->>>>>>> main
 function IncomeModal({ editingIncome, onClose, onSave }) {
   const [form, setForm] = useState(editingIncome ? {
     ...editingIncome,
@@ -131,11 +77,7 @@ function IncomeModal({ editingIncome, onClose, onSave }) {
 
   function validate() {
     const nextErrors = {}
-<<<<<<< HEAD
-    if (!form.name.trim()) nextErrors.name = 'Income name is required.'
-=======
     if (!form.title.trim()) nextErrors.title = 'Income title is required.'
->>>>>>> main
     if (!form.amount || Number(form.amount) <= 0) nextErrors.amount = 'Enter a valid amount.'
     if (!form.date) nextErrors.date = 'Date is required.'
     return nextErrors
@@ -151,14 +93,9 @@ function IncomeModal({ editingIncome, onClose, onSave }) {
 
     onSave({
       ...form,
-<<<<<<< HEAD
-      name: form.name.trim(),
-      amount: Number(form.amount),
-=======
       title: form.title.trim(),
       amount: Number(form.amount),
       description: form.description.trim(),
->>>>>>> main
       note: form.note.trim(),
     })
   }
@@ -172,27 +109,6 @@ function IncomeModal({ editingIncome, onClose, onSave }) {
         </div>
 
         <form onSubmit={submit}>
-<<<<<<< HEAD
-          <div className="inc-preview-card">
-            <div className="inc-preview-icon">{form.icon}</div>
-            <div>
-              <p className="inc-preview-name">{form.name || 'Income name'}</p>
-              <p className="inc-preview-sub">{formatMoney(form.amount)} • {form.category}</p>
-            </div>
-          </div>
-
-          <div className="inc-form-field">
-            <label>Income Name</label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={onChange}
-              placeholder="e.g. Salary Payment"
-              className={errors.name ? 'error' : ''}
-              autoFocus
-            />
-            {errors.name && <span className="inc-error">{errors.name}</span>}
-=======
           <div className="inc-form-field">
             <label>Income Title</label>
             <input
@@ -204,7 +120,6 @@ function IncomeModal({ editingIncome, onClose, onSave }) {
               autoFocus
             />
             {errors.title && <span className="inc-error">{errors.title}</span>}
->>>>>>> main
           </div>
 
           <div className="inc-form-row">
@@ -243,33 +158,6 @@ function IncomeModal({ editingIncome, onClose, onSave }) {
                 ))}
               </select>
             </div>
-<<<<<<< HEAD
-
-            <div className="inc-form-field">
-              <label>Payment Method</label>
-              <select name="paymentMethod" value={form.paymentMethod} onChange={onChange}>
-                {PAYMENT_METHODS.map((method) => (
-                  <option key={method} value={method}>{method}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="inc-form-field">
-            <label>Icon</label>
-            <div className="inc-icon-grid">
-              {ICONS.map((icon) => (
-                <button
-                  key={icon}
-                  type="button"
-                  className={`inc-icon-btn ${form.icon === icon ? 'selected' : ''}`}
-                  onClick={() => setForm((prev) => ({ ...prev, icon }))}
-                >
-                  {icon}
-                </button>
-              ))}
-            </div>
-=======
           </div>
 
           <div className="inc-form-field">
@@ -281,7 +169,6 @@ function IncomeModal({ editingIncome, onClose, onSave }) {
               onChange={onChange}
               placeholder="Short description or source of income"
             />
->>>>>>> main
           </div>
 
           <div className="inc-form-field">
@@ -319,21 +206,12 @@ function IncomeViewModal({ income, onClose }) {
         </div>
 
         <div className="inc-view-grid">
-<<<<<<< HEAD
-          <div><span>Name</span><strong>{income.icon} {income.name}</strong></div>
-          <div><span>Amount</span><strong>{formatMoney(income.amount)}</strong></div>
-          <div><span>Date</span><strong>{formatDate(income.date)}</strong></div>
-          <div><span>Category</span><strong>{income.category}</strong></div>
-          <div><span>Payment Method</span><strong>{income.paymentMethod}</strong></div>
-          <div><span>Note</span><strong>{income.note || 'No note added'}</strong></div>
-=======
           <div><span>Title</span><strong>{income.title}</strong></div>
           <div><span>Amount</span><strong>{formatMoney(income.amount)}</strong></div>
           <div><span>Date</span><strong>{formatDate(income.date)}</strong></div>
           <div><span>Category</span><strong>{income.category}</strong></div>
           <div><span>Description</span><strong>{income.description || 'No description added'}</strong></div>
           <div><span>Note</span><strong>{income.note || income.notes || 'No note added'}</strong></div>
->>>>>>> main
         </div>
       </div>
     </div>
@@ -341,18 +219,12 @@ function IncomeViewModal({ income, onClose }) {
 }
 
 export default function IncomePage({ onOpenSidebar }) {
-<<<<<<< HEAD
-  const [incomeList, setIncomeList] = useState(INITIAL_INCOME)
-=======
   const [incomeList, setIncomeList] = useState([])
->>>>>>> main
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [search, setSearch] = useState('')
   const [showFormModal, setShowFormModal] = useState(false)
   const [editingIncome, setEditingIncome] = useState(null)
   const [viewingIncome, setViewingIncome] = useState(null)
-<<<<<<< HEAD
-=======
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [userId, setUserId] = useState(null)
@@ -391,7 +263,6 @@ export default function IncomePage({ onOpenSidebar }) {
       setLoading(false)
     }
   }, [fetchIncome])
->>>>>>> main
 
   const categoriesInUse = useMemo(
     () => [...new Set(incomeList.map((income) => income.category))],
@@ -405,15 +276,9 @@ export default function IncomePage({ onOpenSidebar }) {
         const query = search.trim().toLowerCase()
         if (!query) return true
         return (
-<<<<<<< HEAD
-          income.name.toLowerCase().includes(query)
-          || income.category.toLowerCase().includes(query)
-          || income.paymentMethod.toLowerCase().includes(query)
-=======
           (income.title || '').toLowerCase().includes(query)
           || (income.description || '').toLowerCase().includes(query)
           || income.category.toLowerCase().includes(query)
->>>>>>> main
         )
       })
       .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -486,25 +351,6 @@ export default function IncomePage({ onOpenSidebar }) {
     setShowFormModal(true)
   }
 
-<<<<<<< HEAD
-  function saveIncome(incomeData) {
-    if (editingIncome) {
-      setIncomeList((prev) => prev.map((inc) => (
-        inc.id === editingIncome.id ? { ...incomeData, id: editingIncome.id } : inc
-      )))
-    } else {
-      setIncomeList((prev) => [{ ...incomeData, id: Date.now() }, ...prev])
-    }
-
-    setShowFormModal(false)
-    setEditingIncome(null)
-  }
-
-  function deleteIncome(id) {
-    const shouldDelete = window.confirm('Delete this income record?')
-    if (!shouldDelete) return
-    setIncomeList((prev) => prev.filter((income) => income.id !== id))
-=======
   async function saveIncome(incomeData) {
     try {
       if (!userId) {
@@ -576,7 +422,6 @@ export default function IncomePage({ onOpenSidebar }) {
       console.error('Delete income error:', err)
       alert(`Failed to delete income: ${err.message}`)
     }
->>>>>>> main
   }
 
   const today = new Date().toLocaleDateString('en-US', {
@@ -603,11 +448,8 @@ export default function IncomePage({ onOpenSidebar }) {
         </div>
       </header>
 
-<<<<<<< HEAD
-=======
       {error && <div className="inc-error-banner">{error}</div>}
 
->>>>>>> main
       <section className="inc-kpi-grid">
         <article className="kpi-card">
           <div className="kpi-top"><span className="kpi-icon">📈</span><span className="kpi-badge pos">↑</span></div>
@@ -668,44 +510,6 @@ export default function IncomePage({ onOpenSidebar }) {
         </div>
 
         <div className="inc-table-wrap">
-<<<<<<< HEAD
-          <table className="inc-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Payment Method</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredIncome.length === 0 && (
-                <tr>
-                  <td colSpan="6" className="inc-empty-row">No income records match this filter.</td>
-                </tr>
-              )}
-
-              {filteredIncome.map((income) => (
-                <tr key={income.id}>
-                  <td>{formatDate(income.date)}</td>
-                  <td>{income.category}</td>
-                  <td>{income.icon} {income.name}</td>
-                  <td className="inc-amount">{formatMoney(income.amount)}</td>
-                  <td>{income.paymentMethod}</td>
-                  <td>
-                    <div className="inc-actions">
-                      <button type="button" className="inc-btn-view" onClick={() => setViewingIncome(income)}>View</button>
-                      <button type="button" className="inc-btn-edit" onClick={() => openEdit(income)}>Edit</button>
-                      <button type="button" className="inc-btn-delete" onClick={() => deleteIncome(income.id)}>Delete</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-=======
           {loading ? (
             <p className="inc-loading">Loading...</p>
           ) : (
@@ -746,7 +550,6 @@ export default function IncomePage({ onOpenSidebar }) {
               </tbody>
             </table>
           )}
->>>>>>> main
         </div>
       </section>
 

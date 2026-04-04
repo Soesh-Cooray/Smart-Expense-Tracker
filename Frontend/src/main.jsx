@@ -9,16 +9,12 @@ import VerifyAccount from './components/auth/VerifyAccount.jsx'
 import ForgotPassword from './components/auth/ForgotPassword.jsx'
 import Dashboard from './Dashboard.jsx'
 import SavingsGoals from './components/savings/SavingsGoals.jsx'
-<<<<<<< HEAD
 import App from './App.jsx'
-=======
->>>>>>> main
 import IncomeLayout from './components/income/IncomeLayout.jsx'
 import ExpenseLayout from './components/expenses/ExpenseLayout.jsx'
 import SettingsPage from './components/settings/SettingsPage.jsx'
 
 createRoot(document.getElementById('root')).render(
-<<<<<<< HEAD
   <StrictMode>
     <BrowserRouter>
       <Routes>
@@ -37,22 +33,3 @@ createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </StrictMode>,
 )
-=======
-    <StrictMode>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/verify" element={<VerifyAccount />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/goals" element={<SavingsGoals />} />
-          <Route path="/income" element={<IncomeLayout />} />
-          <Route path="/expenses" element={<ExpenseLayout />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Routes>
-      </BrowserRouter>
-    </StrictMode>,
-)
->>>>>>> main

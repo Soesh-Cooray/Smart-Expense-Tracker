@@ -139,8 +139,6 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-<<<<<<< HEAD
-=======
 .settings-pw-strength {
   margin-top: -2px;
 }
@@ -175,7 +173,6 @@
 .settings-pw-strength-label.good { color: #3b82f6; }
 .settings-pw-strength-label.strong { color: #16a34a; }
 
->>>>>>> main
 .settings-btn {
   border: none;
   border-radius: 10px;

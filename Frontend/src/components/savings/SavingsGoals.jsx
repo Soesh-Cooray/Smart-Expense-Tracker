@@ -37,11 +37,6 @@ const DEFAULT_FORM = {
   color: '#1d4ed8',
 }
 
-<<<<<<< HEAD
-// ── helpers ───────────────────────────────────────────────────────────────────
-
-=======
->>>>>>> main
 function pct(saved, target) {
   if (!target) return 0
   return Math.min(100, Math.round((saved / target) * 100))
@@ -49,7 +44,6 @@ function pct(saved, target) {
 
 function parseDate(dueDate) {
   if (!dueDate) return null
-  // Jackson 3.x may return [year, month, day] array instead of a string
   if (Array.isArray(dueDate)) {
     const [y, m, d] = dueDate
     return new Date(y, m - 1, d)
@@ -78,11 +72,6 @@ function fmtMoney(n) {
   return `Rs.${Number(n).toLocaleString()}`
 }
 
-<<<<<<< HEAD
-// ── GoalCard ──────────────────────────────────────────────────────────────────
-
-=======
->>>>>>> main
 function GoalCard({ goal, onEdit, onDelete }) {
   const [confirming, setConfirming] = useState(false)
   const p = pct(goal.savedAmount, goal.targetAmount)
@@ -113,11 +102,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
         </div>
       ) : (
         <>
-<<<<<<< HEAD
-          {/* Top: icon + name + % */}
-=======
-
->>>>>>> main
           <div className="sg-card-top">
             <div
               className="sg-icon-bubble"
@@ -137,7 +121,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
             </span>
           </div>
 
-          {/* Days remaining badge */}
           {daysLeft !== null && (
             <div className={`sg-days-badge ${urgencyClass}`}>
               {daysLeft <= 0
@@ -146,7 +129,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
             </div>
           )}
 
-          {/* Progress bar */}
           <div className="sg-progress-bg">
             <div
               className="sg-progress-fill"
@@ -154,7 +136,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
             />
           </div>
 
-          {/* Amounts */}
           <div className="sg-card-amounts">
             <span>
               <strong>{fmtMoney(goal.savedAmount)}</strong> saved
@@ -164,7 +145,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
 
           <div className="sg-target-label">Target: {fmtMoney(goal.targetAmount)}</div>
 
-          {/* Actions */}
           <div className="sg-card-actions">
             <button className="sg-btn-edit" onClick={() => onEdit(goal)}>
               ✏ Edit
@@ -178,11 +158,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
     </div>
   )
 }
-
-<<<<<<< HEAD
-// ── GoalModal ─────────────────────────────────────────────────────────────────
-=======
->>>>>>> main
 
 function GoalModal({ editingGoal, onClose, onSave }) {
   const [form, setForm] = useState(
@@ -241,11 +216,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
   return (
     <div className="sg-modal-backdrop" onClick={onClose}>
       <div className="sg-modal" onClick={(e) => e.stopPropagation()}>
-<<<<<<< HEAD
-        {/* Header */}
-=======
-        
->>>>>>> main
         <div className="sg-modal-header">
           <h2>{editingGoal ? 'Edit Goal' : 'New Savings Goal'}</h2>
           <button className="sg-modal-close" onClick={onClose} type="button">
@@ -255,11 +225,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="sg-modal-body">
-<<<<<<< HEAD
-            {/* Live preview */}
-=======
-           
->>>>>>> main
             <div
               className="sg-modal-preview"
               style={{
@@ -284,7 +249,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
               </div>
             </div>
 
-            {/* Name */}
             <div className="sg-form-field">
               <label>Goal name</label>
               <input
@@ -298,7 +262,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
               {errors.name && <span className="sg-field-error">{errors.name}</span>}
             </div>
 
-            {/* Amounts */}
             <div className="sg-form-row">
               <div className="sg-form-field">
                 <label>Target amount (Rs.)</label>
@@ -332,7 +295,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
               </div>
             </div>
 
-            {/* Due date */}
             <div className="sg-form-field">
               <label>Due date</label>
               <input
@@ -347,7 +309,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
               )}
             </div>
 
-            {/* Icon picker */}
             <div className="sg-form-field">
               <label>Icon</label>
               <div className="sg-icon-grid">
@@ -370,7 +331,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
               </div>
             </div>
 
-            {/* Color picker */}
             <div className="sg-form-field">
               <label>Color</label>
               <div className="sg-color-row">
@@ -388,7 +348,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
             </div>
           </div>
 
-          {/* Footer buttons */}
           <div className="sg-modal-footer">
             <button type="button" className="sg-btn-cancel" onClick={onClose}>
               Cancel
@@ -403,11 +362,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
   )
 }
 
-<<<<<<< HEAD
-// ── Main page ─────────────────────────────────────────────────────────────────
-
-=======
->>>>>>> main
 export default function SavingsGoals() {
   const [goals, setGoals] = useState([])
   const [loading, setLoading] = useState(true)
@@ -418,7 +372,6 @@ export default function SavingsGoals() {
   const [userId, setUserId] = useState(null)
 
   useEffect(() => {
-    // Get user ID from localStorage
     const storedUserId = localStorage.getItem('userId')
     if (storedUserId) {
       setUserId(parseInt(storedUserId))
@@ -454,7 +407,6 @@ export default function SavingsGoals() {
         setError('User ID not found. Please log in again.')
         return
       }
-      
       const url = editingGoal
         ? `${API_BASE}/savings-goals/${editingGoal.id}`
         : `${API_BASE}/savings-goals`
@@ -503,45 +455,17 @@ export default function SavingsGoals() {
     setEditingGoal(null)
   }
 
-  // ── Derived stats ─────────────────────────────────────────────────────────
-
   const totalSaved = goals.reduce((s, g) => s + g.savedAmount, 0)
   const totalTarget = goals.reduce((s, g) => s + g.targetAmount, 0)
   const overallPct = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0
   const completedCount = goals.filter((g) => pct(g.savedAmount, g.targetAmount) >= 100).length
 
   const kpis = [
-    {
-      label: 'Total Goals',
-      value: goals.length,
-      icon: '🎯',
-      note: `${completedCount} completed`,
-      pos: true,
-    },
-    {
-      label: 'Total Saved',
-      value: fmtMoney(totalSaved),
-      icon: '💰',
-      note: 'across all goals',
-      pos: true,
-    },
-    {
-      label: 'Total Target',
-      value: fmtMoney(totalTarget),
-      icon: '🏆',
-      note: 'combined targets',
-      pos: true,
-    },
-    {
-      label: 'Overall Progress',
-      value: `${overallPct}%`,
-      icon: '📈',
-      note: 'of total target reached',
-      pos: overallPct > 0,
-    },
+    { label: 'Total Goals', value: goals.length, icon: '🎯', note: `${completedCount} completed`, pos: true },
+    { label: 'Total Saved', value: fmtMoney(totalSaved), icon: '💰', note: 'across all goals', pos: true },
+    { label: 'Total Target', value: fmtMoney(totalTarget), icon: '🏆', note: 'combined targets', pos: true },
+    { label: 'Overall Progress', value: `${overallPct}%`, icon: '📈', note: 'of total target reached', pos: overallPct > 0 },
   ]
-
-  // ── Chart configs ─────────────────────────────────────────────────────────
 
   const hasGoals = goals.length > 0
 
@@ -610,11 +534,7 @@ export default function SavingsGoals() {
         max: 100,
         grid: { color: '#f3f4f6' },
         border: { display: false },
-        ticks: {
-          color: '#9ca3af',
-          font: { size: 12 },
-          callback: (v) => `${v}%`,
-        },
+        ticks: { color: '#9ca3af', font: { size: 12 }, callback: (v) => `${v}%` },
       },
       y: {
         grid: { display: false },
@@ -642,7 +562,6 @@ export default function SavingsGoals() {
       />
 
       <main className="db-main">
-        {/* Header */}
         <header className="db-header">
           <div className="db-header-left">
             <button
@@ -658,22 +577,14 @@ export default function SavingsGoals() {
             </div>
           </div>
           <div className="db-header-right">
-<<<<<<< HEAD
-            <button className="db-icon-btn" type="button" title="Notifications">
-              🔔
-            </button>
-=======
->>>>>>> main
             <button className="btn-primary db-add-btn" type="button" onClick={openAdd}>
               + Add Goal
             </button>
           </div>
         </header>
 
-        {/* Error banner */}
         {error && <div className="sg-alert">⚠ {error}</div>}
 
-        {/* KPI cards */}
         <section className="db-kpi-grid">
           {kpis.map((k) => (
             <div key={k.label} className="kpi-card">
@@ -690,10 +601,8 @@ export default function SavingsGoals() {
           ))}
         </section>
 
-        {/* Charts — only shown when there are goals */}
         {hasGoals && (
           <section className="sg-charts-row">
-            {/* Doughnut — goal distribution */}
             <div className="db-card sg-chart-card">
               <div className="db-card-header">
                 <h3>Goal Distribution</h3>
@@ -721,7 +630,6 @@ export default function SavingsGoals() {
               </div>
             </div>
 
-            {/* Horizontal bar — progress by goal */}
             <div className="db-card sg-chart-card">
               <div className="db-card-header">
                 <h3>Progress by Goal</h3>
@@ -737,13 +645,10 @@ export default function SavingsGoals() {
           </section>
         )}
 
-        {/* Goals grid */}
         <section>
           <div className="db-card-header" style={{ marginBottom: 16 }}>
             <h3 className="sg-section-title">
-              {goals.length > 0
-                ? `All Goals (${goals.length})`
-                : 'Your Goals'}
+              {goals.length > 0 ? `All Goals (${goals.length})` : 'Your Goals'}
             </h3>
             {goals.length > 0 && (
               <button className="db-text-btn" onClick={openAdd}>
