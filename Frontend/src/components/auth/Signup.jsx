@@ -313,6 +313,12 @@ export default function Signup() {
               Sign in
             </button>
           </p>
+          <p className="auth-switch" style={{ marginTop: 6 }}>
+            Forgot password?{' '}
+            <button type="button" onClick={() => navigate('/forgot-password')}>
+              Reset it
+            </button>
+          </p>
         </div>
       </div>
     </div>

@@ -29,10 +29,15 @@ public class SavingsGoalController {
         return service.findAll();
     }
 
+    @GetMapping("/user/{userId}")
+    public List<SavingsGoal> getByUserId(@PathVariable Long userId) {
+        return service.findByUserId(userId);
+    }
+
     @PostMapping
     public ResponseEntity<?> create(@RequestBody SavingsGoalRequest request) {
         try {
-            return ResponseEntity.ok(service.create(request));
+            return ResponseEntity.ok(service.create(request.getUserId(), request));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
