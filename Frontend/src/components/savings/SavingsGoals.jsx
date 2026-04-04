@@ -37,8 +37,11 @@ const DEFAULT_FORM = {
   color: '#1d4ed8',
 }
 
+<<<<<<< HEAD
 // ── helpers ───────────────────────────────────────────────────────────────────
 
+=======
+>>>>>>> main
 function pct(saved, target) {
   if (!target) return 0
   return Math.min(100, Math.round((saved / target) * 100))
@@ -75,8 +78,11 @@ function fmtMoney(n) {
   return `Rs.${Number(n).toLocaleString()}`
 }
 
+<<<<<<< HEAD
 // ── GoalCard ──────────────────────────────────────────────────────────────────
 
+=======
+>>>>>>> main
 function GoalCard({ goal, onEdit, onDelete }) {
   const [confirming, setConfirming] = useState(false)
   const p = pct(goal.savedAmount, goal.targetAmount)
@@ -107,7 +113,11 @@ function GoalCard({ goal, onEdit, onDelete }) {
         </div>
       ) : (
         <>
+<<<<<<< HEAD
           {/* Top: icon + name + % */}
+=======
+
+>>>>>>> main
           <div className="sg-card-top">
             <div
               className="sg-icon-bubble"
@@ -169,7 +179,10 @@ function GoalCard({ goal, onEdit, onDelete }) {
   )
 }
 
+<<<<<<< HEAD
 // ── GoalModal ─────────────────────────────────────────────────────────────────
+=======
+>>>>>>> main
 
 function GoalModal({ editingGoal, onClose, onSave }) {
   const [form, setForm] = useState(
@@ -228,7 +241,11 @@ function GoalModal({ editingGoal, onClose, onSave }) {
   return (
     <div className="sg-modal-backdrop" onClick={onClose}>
       <div className="sg-modal" onClick={(e) => e.stopPropagation()}>
+<<<<<<< HEAD
         {/* Header */}
+=======
+        
+>>>>>>> main
         <div className="sg-modal-header">
           <h2>{editingGoal ? 'Edit Goal' : 'New Savings Goal'}</h2>
           <button className="sg-modal-close" onClick={onClose} type="button">
@@ -238,7 +255,11 @@ function GoalModal({ editingGoal, onClose, onSave }) {
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="sg-modal-body">
+<<<<<<< HEAD
             {/* Live preview */}
+=======
+           
+>>>>>>> main
             <div
               className="sg-modal-preview"
               style={{
@@ -382,8 +403,11 @@ function GoalModal({ editingGoal, onClose, onSave }) {
   )
 }
 
+<<<<<<< HEAD
 // ── Main page ─────────────────────────────────────────────────────────────────
 
+=======
+>>>>>>> main
 export default function SavingsGoals() {
   const [goals, setGoals] = useState([])
   const [loading, setLoading] = useState(true)
@@ -634,9 +658,12 @@ export default function SavingsGoals() {
             </div>
           </div>
           <div className="db-header-right">
+<<<<<<< HEAD
             <button className="db-icon-btn" type="button" title="Notifications">
               🔔
             </button>
+=======
+>>>>>>> main
             <button className="btn-primary db-add-btn" type="button" onClick={openAdd}>
               + Add Goal
             </button>

@@ -7,4 +7,8 @@ public class ResetPasswordRequest {
     private String email;
     private Integer code;
     private String newPassword;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> main

@@ -4,6 +4,26 @@ import './Auth.css'
 
 const API_BASE = 'http://localhost:8080'
 
+<<<<<<< HEAD
+=======
+function getPasswordStrength(pw) {
+  if (!pw) return { score: 0, label: '', cls: '' }
+  let score = 0
+  if (pw.length >= 8) score++
+  if (/[A-Z]/.test(pw)) score++
+  if (/[0-9]/.test(pw)) score++
+  if (/[^A-Za-z0-9]/.test(pw)) score++
+  const map = [
+    { label: 'Weak', cls: 'weak' },
+    { label: 'Weak', cls: 'weak' },
+    { label: 'Fair', cls: 'fair' },
+    { label: 'Good', cls: 'good' },
+    { label: 'Strong', cls: 'strong' },
+  ]
+  return { score, ...map[score] }
+}
+
+>>>>>>> main
 function LeftPanel() {
   return (
     <div className="auth-left">
@@ -47,6 +67,16 @@ export default function ForgotPassword() {
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
   const [success, setSuccess] = useState('')
+<<<<<<< HEAD
+=======
+  const pwStrength = getPasswordStrength(newPassword)
+  const isPasswordStrong = pwStrength.score === 4
+
+  const strengthSegClass = (idx) => {
+    if (pwStrength.score > idx) return `auth-pw-strength-seg filled-${pwStrength.cls}`
+    return 'auth-pw-strength-seg'
+  }
+>>>>>>> main
 
   async function handleSendCode(e) {
     e.preventDefault()
@@ -90,8 +120,17 @@ export default function ForgotPassword() {
       setFormError('Reset code is required.')
       return
     }
+<<<<<<< HEAD
     if (newPassword.length < 6) {
       setFormError('New password must be at least 6 characters.')
+=======
+    if (newPassword.length < 8) {
+      setFormError('New password must be at least 8 characters.')
+      return
+    }
+    if (pwStrength.score < 4) {
+      setFormError('New password must be strong (8+ chars with uppercase, number, and symbol).')
+>>>>>>> main
       return
     }
     if (newPassword !== confirmPassword) {
@@ -192,12 +231,31 @@ export default function ForgotPassword() {
                       className="auth-input"
                       type="password"
                       name="newPassword"
+<<<<<<< HEAD
                       placeholder="Min. 6 characters"
+=======
+                      placeholder="Min. 8 characters"
+>>>>>>> main
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       autoComplete="new-password"
                     />
                   </div>
+<<<<<<< HEAD
+=======
+                  {newPassword && (
+                    <div className="auth-pw-strength">
+                      <div className="auth-pw-strength-bar">
+                        {[0, 1, 2, 3].map((i) => (
+                          <div key={i} className={strengthSegClass(i)} />
+                        ))}
+                      </div>
+                      <span className={`auth-pw-strength-label ${pwStrength.cls}`}>
+                        {pwStrength.label} password
+                      </span>
+                    </div>
+                  )}
+>>>>>>> main
                 </div>
 
                 <div className="auth-field">
@@ -217,7 +275,11 @@ export default function ForgotPassword() {
                   </div>
                 </div>
 
+<<<<<<< HEAD
                 <button type="submit" className="auth-submit" disabled={submitting}>
+=======
+                <button type="submit" className="auth-submit" disabled={submitting || !isPasswordStrong}>
+>>>>>>> main
                   {submitting ? 'Resetting…' : 'Reset Password'}
                 </button>
               </form>

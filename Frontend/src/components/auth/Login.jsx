@@ -4,8 +4,11 @@ import './Auth.css'
 
 const API_BASE = 'http://localhost:8080'
 
+<<<<<<< HEAD
 // ── helpers ──────────────────────────────────────────────────────────────────
 
+=======
+>>>>>>> main
 function validate(fields) {
   const errors = {}
   if (!fields.email.trim()) {
@@ -21,8 +24,11 @@ function validate(fields) {
   return errors
 }
 
+<<<<<<< HEAD
 // ── left panel ────────────────────────────────────────────────────────────────
 
+=======
+>>>>>>> main
 function LeftPanel() {
   return (
     <div className="auth-left">
@@ -40,6 +46,7 @@ function LeftPanel() {
         <div className="auth-features">
           <div className="auth-feature">
             <span className="auth-feature-icon">📊</span>
+<<<<<<< HEAD
             <span>Real-time spending insights</span>
           </div>
           <div className="auth-feature">
@@ -49,6 +56,17 @@ function LeftPanel() {
           <div className="auth-feature">
             <span className="auth-feature-icon">🤖</span>
             <span>AI-powered expense categorization</span>
+=======
+            <span>Budget Management</span>
+          </div>
+          <div className="auth-feature">
+            <span className="auth-feature-icon">🎯</span>
+            <span>Savings goal tracking</span>
+          </div>
+          <div className="auth-feature">
+            <span className="auth-feature-icon">🤖</span>
+            <span>AI-powered expense prediction</span>
+>>>>>>> main
           </div>
         </div>
       </div>
@@ -56,7 +74,10 @@ function LeftPanel() {
   )
 }
 
+<<<<<<< HEAD
 // ── main component ────────────────────────────────────────────────────────────
+=======
+>>>>>>> main
 
 export default function Login() {
   const navigate = useNavigate()
@@ -64,7 +85,10 @@ export default function Login() {
   const [fields, setFields] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
+<<<<<<< HEAD
   const [rememberMe, setRememberMe] = useState(false)
+=======
+>>>>>>> main
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -191,6 +215,7 @@ export default function Login() {
                 {errors.password && <p className="auth-field-error">{errors.password}</p>}
               </div>
 
+<<<<<<< HEAD
               {/* Remember me */}
               <div className="auth-checkbox-row" style={{ marginBottom: 24 }}>
                 <input
@@ -204,10 +229,13 @@ export default function Login() {
                 </span>
               </div>
 
+=======
+>>>>>>> main
               <button type="submit" className="auth-submit" disabled={submitting}>
                 {submitting ? 'Signing in…' : 'Sign in'}
               </button>
             </form>
+<<<<<<< HEAD
 
             <div className="auth-divider">
               <div className="auth-divider-line" />
@@ -219,6 +247,8 @@ export default function Login() {
               <span className="auth-oauth-icon">G</span>
               Continue with Google
             </button>
+=======
+>>>>>>> main
           </div>
 
           <p className="auth-switch">
