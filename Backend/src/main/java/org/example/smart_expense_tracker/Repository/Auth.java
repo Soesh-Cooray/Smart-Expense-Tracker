@@ -14,6 +14,6 @@ public interface Auth extends JpaRepository<Users, Integer> {
     Optional<Users> findByUsernameAndVerificationCode(String username, int verificationCode);
 
     @Modifying
-    @Query(value = "DELETE FROM income WHERE user_id = :userId", nativeQuery = true)
+    @Query(value = "DELETE FROM incomes WHERE user_id = :userId", nativeQuery = true)
     void deleteIncomeByUserId(@Param("userId") Long userId);
 }
