@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Chart as ChartJS,
   ArcElement,
@@ -31,7 +31,6 @@ const COLORS = [
 const DEFAULT_FORM = {
   name: '',
   targetAmount: '',
-  savedAmount: '',
   dueDate: '',
   icon: '🎯',
   color: '#1d4ed8',
@@ -167,12 +166,12 @@ function GoalCard({ goal, onEdit, onDelete }) {
 
 
 function GoalModal({ editingGoal, onClose, onSave }) {
+  const todayDate = new Date().toISOString().slice(0, 10)
   const [form, setForm] = useState(
     editingGoal
       ? {
           name: editingGoal.name,
           targetAmount: editingGoal.targetAmount,
-          savedAmount: editingGoal.savedAmount,
           dueDate: editingGoal.dueDate || '',
           icon: editingGoal.icon,
           color: editingGoal.color,
@@ -193,10 +192,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
     if (!form.name.trim()) errs.name = 'Goal name is required.'
     if (!form.targetAmount || Number(form.targetAmount) <= 0)
       errs.targetAmount = 'Enter a valid target amount.'
-    if (form.savedAmount !== '' && Number(form.savedAmount) < 0)
-      errs.savedAmount = 'Cannot be negative.'
-    if (Number(form.savedAmount) > Number(form.targetAmount) && form.targetAmount)
-      errs.savedAmount = 'Saved cannot exceed target.'
     if (!form.dueDate) errs.dueDate = 'Due date is required.'
     return errs
   }
@@ -212,7 +207,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
     await onSave({
       name: form.name.trim(),
       targetAmount: Number(form.targetAmount),
-      savedAmount: Number(form.savedAmount) || 0,
       dueDate: form.dueDate,
       icon: form.icon,
       color: form.color,
@@ -253,7 +247,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
                 </div>
                 <div className="sg-modal-preview-sub">
                   {form.targetAmount ? fmtMoney(form.targetAmount) : 'Rs.0'} target
-                  {form.savedAmount > 0 && ` · ${fmtMoney(form.savedAmount)} saved`}
                 </div>
               </div>
             </div>
@@ -273,37 +266,20 @@ function GoalModal({ editingGoal, onClose, onSave }) {
             </div>
 
             {/* Amounts */}
-            <div className="sg-form-row">
-              <div className="sg-form-field">
-                <label>Target amount (Rs.)</label>
-                <input
-                  name="targetAmount"
-                  type="number"
-                  min="1"
-                  value={form.targetAmount}
-                  onChange={handleChange}
-                  placeholder="30000"
-                  className={errors.targetAmount ? 'error' : ''}
-                />
-                {errors.targetAmount && (
-                  <span className="sg-field-error">{errors.targetAmount}</span>
-                )}
-              </div>
-              <div className="sg-form-field">
-                <label>Already saved (Rs.)</label>
-                <input
-                  name="savedAmount"
-                  type="number"
-                  min="0"
-                  value={form.savedAmount}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className={errors.savedAmount ? 'error' : ''}
-                />
-                {errors.savedAmount && (
-                  <span className="sg-field-error">{errors.savedAmount}</span>
-                )}
-              </div>
+            <div className="sg-form-field">
+              <label>Target amount (Rs.)</label>
+              <input
+                name="targetAmount"
+                type="number"
+                min="1"
+                value={form.targetAmount}
+                onChange={handleChange}
+                placeholder="30000"
+                className={errors.targetAmount ? 'error' : ''}
+              />
+              {errors.targetAmount && (
+                <span className="sg-field-error">{errors.targetAmount}</span>
+              )}
             </div>
 
             {/* Due date */}
@@ -312,6 +288,7 @@ function GoalModal({ editingGoal, onClose, onSave }) {
               <input
                 name="dueDate"
                 type="date"
+                min={todayDate}
                 value={form.dueDate}
                 onChange={handleChange}
                 className={errors.dueDate ? 'error' : ''}
@@ -379,26 +356,22 @@ function GoalModal({ editingGoal, onClose, onSave }) {
 
 export default function SavingsGoals() {
   const [goals, setGoals] = useState([])
+  const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [transactionError, setTransactionError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingGoal, setEditingGoal] = useState(null)
   const [userId, setUserId] = useState(null)
+  const [savingTransaction, setSavingTransaction] = useState(false)
+  const [transactionForm, setTransactionForm] = useState({
+    savingsGoalId: '',
+    amount: '',
+    date: new Date().toISOString().slice(0, 10),
+  })
 
-  useEffect(() => {
-    // Get user ID from localStorage
-    const storedUserId = localStorage.getItem('userId')
-    if (storedUserId) {
-      setUserId(parseInt(storedUserId))
-      fetchGoals(storedUserId)
-    } else {
-      setError('User not logged in. Please log in first.')
-      setLoading(false)
-    }
-  }, [])
-
-  async function fetchGoals(userIdParam) {
+  const fetchGoals = useCallback(async (userIdParam) => {
     try {
       const id = userIdParam || localStorage.getItem('userId')
       if (!id) {
@@ -407,14 +380,48 @@ export default function SavingsGoals() {
       }
       const res = await fetch(`${API_BASE}/savings-goals/user/${id}`)
       if (!res.ok) throw new Error()
-      setGoals(await res.json())
+      const goalData = await res.json()
+      setGoals(goalData)
+      setTransactionForm((prev) => ({
+        ...prev,
+        savingsGoalId: prev.savingsGoalId || (goalData[0]?.id ? String(goalData[0].id) : ''),
+      }))
       setError('')
     } catch {
       setError('Could not connect to the server. Make sure the backend is running.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  const fetchTransactions = useCallback(async (userIdParam) => {
+    try {
+      const id = userIdParam || userId || localStorage.getItem('userId')
+      if (!id) return
+      const res = await fetch(`${API_BASE}/savings-transactions/user/${id}`)
+      if (!res.ok) throw new Error()
+      const txData = await res.json()
+      setTransactions(Array.isArray(txData) ? txData : [])
+      setTransactionError('')
+    } catch {
+      setTransactions([])
+      setTransactionError('Could not load savings transactions.')
+    }
+  }, [userId])
+
+  useEffect(() => {
+    // Get user ID from localStorage
+    const storedUserId = localStorage.getItem('userId')
+    if (storedUserId) {
+      const parsedUserId = parseInt(storedUserId, 10)
+      setUserId(parsedUserId)
+      fetchGoals(parsedUserId)
+      fetchTransactions(parsedUserId)
+    } else {
+      setError('User not logged in. Please log in first.')
+      setLoading(false)
+    }
+  }, [fetchGoals, fetchTransactions])
 
   async function handleSave(data) {
     try {
@@ -439,11 +446,73 @@ export default function SavingsGoals() {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to save')
       }
-      await fetchGoals()
+      await fetchGoals(currentUserId)
       closeModal()
       setError('')
     } catch (err) {
       setError(`Failed to save goal: ${err.message}`)
+    }
+  }
+
+  function handleTransactionInputChange(e) {
+    const { name, value } = e.target
+    setTransactionForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  async function handleAddTransaction(e) {
+    e.preventDefault()
+    setTransactionError('')
+
+    const currentUserId = userId || localStorage.getItem('userId')
+    if (!currentUserId) {
+      setTransactionError('User ID not found. Please log in again.')
+      return
+    }
+
+    if (!transactionForm.savingsGoalId) {
+      setTransactionError('Please select a savings goal.')
+      return
+    }
+
+    if (!transactionForm.date) {
+      setTransactionError('Please select a date.')
+      return
+    }
+
+    if (!transactionForm.amount || Number(transactionForm.amount) <= 0) {
+      setTransactionError('Enter a valid amount greater than 0.')
+      return
+    }
+
+    try {
+      setSavingTransaction(true)
+      const res = await fetch(`${API_BASE}/savings-transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: parseInt(currentUserId, 10),
+          savingsGoalId: Number(transactionForm.savingsGoalId),
+          amount: Number(transactionForm.amount),
+          date: transactionForm.date,
+        }),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to add savings transaction')
+      }
+
+      setTransactionForm((prev) => ({
+        ...prev,
+        amount: '',
+        date: new Date().toISOString().slice(0, 10),
+      }))
+
+      await Promise.all([fetchGoals(currentUserId), fetchTransactions(currentUserId)])
+    } catch (err) {
+      setTransactionError(err.message || 'Failed to add savings transaction.')
+    } finally {
+      setSavingTransaction(false)
     }
   }
 
@@ -478,6 +547,10 @@ export default function SavingsGoals() {
   const totalTarget = goals.reduce((s, g) => s + g.targetAmount, 0)
   const overallPct = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0
   const completedCount = goals.filter((g) => pct(g.savedAmount, g.targetAmount) >= 100).length
+  const goalNameById = useMemo(
+    () => Object.fromEntries(goals.map((goal) => [goal.id, goal.name])),
+    [goals]
+  )
 
   const kpis = [
     {
@@ -696,6 +769,85 @@ export default function SavingsGoals() {
               >
                 <Bar data={barData} options={barOptions} />
               </div>
+            </div>
+          </section>
+        )}
+
+        {hasGoals && (
+          <section className="db-card sg-transactions-section">
+            <div className="db-card-header">
+              <h3>Add Savings</h3>
+              <span className="db-card-tag db-card-tag-blue">updates goal automatically</span>
+            </div>
+
+            <form className="sg-transaction-form" onSubmit={handleAddTransaction}>
+              <select
+                name="savingsGoalId"
+                value={transactionForm.savingsGoalId}
+                onChange={handleTransactionInputChange}
+                required
+              >
+                <option value="">Select savings goal</option>
+                {goals.map((goal) => (
+                  <option key={goal.id} value={goal.id}>
+                    {goal.name}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                name="date"
+                type="date"
+                value={transactionForm.date}
+                onChange={handleTransactionInputChange}
+                required
+              />
+
+              <input
+                name="amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="Amount (Rs.)"
+                value={transactionForm.amount}
+                onChange={handleTransactionInputChange}
+                required
+              />
+
+              <button type="submit" className="sg-transaction-submit" disabled={savingTransaction}>
+                {savingTransaction ? 'Saving...' : '+ Add Savings'}
+              </button>
+            </form>
+
+            {transactionError && <div className="sg-alert" style={{ marginTop: 12 }}>⚠ {transactionError}</div>}
+
+            <div className="sg-transaction-table-wrap">
+              <table className="sg-transaction-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Savings Goal</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.length > 0 ? (
+                    transactions.map((tx) => (
+                      <tr key={tx.id}>
+                        <td>{formatDate(tx.date)}</td>
+                        <td>{goalNameById[tx.savingsGoalId] || 'Unknown goal'}</td>
+                        <td>{fmtMoney(tx.amount)}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" className="sg-transaction-empty">
+                        No savings transactions added yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </section>
         )}

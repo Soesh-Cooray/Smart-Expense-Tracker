@@ -27,11 +27,14 @@ public class SavingsGoalService {
         if (userId == null) {
             throw new RuntimeException("User ID is required");
         }
+        if (request.getTargetAmount() <= 0) {
+            throw new RuntimeException("Target amount must be greater than 0");
+        }
         SavingsGoal goal = new SavingsGoal();
         goal.setUserId(userId);
         goal.setName(request.getName());
         goal.setTargetAmount(request.getTargetAmount());
-        goal.setSavedAmount(request.getSavedAmount());
+        goal.setSavedAmount(0);
         goal.setDueDate(request.getDueDate());
         goal.setIcon(request.getIcon());
         goal.setColor(request.getColor());
@@ -41,9 +44,11 @@ public class SavingsGoalService {
     public SavingsGoal update(Long id, SavingsGoalRequest request) {
         SavingsGoal goal = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Savings goal not found with id: " + id));
+        if (request.getTargetAmount() <= 0) {
+            throw new RuntimeException("Target amount must be greater than 0");
+        }
         goal.setName(request.getName());
         goal.setTargetAmount(request.getTargetAmount());
-        goal.setSavedAmount(request.getSavedAmount());
         goal.setDueDate(request.getDueDate());
         goal.setIcon(request.getIcon());
         goal.setColor(request.getColor());
