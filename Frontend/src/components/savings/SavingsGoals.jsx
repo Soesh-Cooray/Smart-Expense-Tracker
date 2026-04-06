@@ -77,11 +77,14 @@ function GoalCard({ goal, onEdit, onDelete }) {
   const p = pct(goal.savedAmount, goal.targetAmount)
   const daysLeft = getDaysLeft(goal.dueDate)
   const toGo = Math.max(0, goal.targetAmount - goal.savedAmount)
+  const completed = p >= 100
 
   let urgencyClass = 'ok'
-  if (daysLeft !== null && daysLeft <= 0) urgencyClass = 'danger'
-  else if (daysLeft !== null && daysLeft < 30) urgencyClass = 'danger'
-  else if (daysLeft !== null && daysLeft < 90) urgencyClass = 'warn'
+  if (!completed) {
+    if (daysLeft !== null && daysLeft <= 0) urgencyClass = 'danger'
+    else if (daysLeft !== null && daysLeft < 30) urgencyClass = 'danger'
+    else if (daysLeft !== null && daysLeft < 90) urgencyClass = 'warn'
+  }
 
   return (
     <div className="sg-card">
@@ -123,7 +126,9 @@ function GoalCard({ goal, onEdit, onDelete }) {
           </div>
 
           {/* Days remaining badge */}
-          {daysLeft !== null && (
+          {completed ? (
+            <div className="sg-days-badge ok">Completed</div>
+          ) : daysLeft !== null && (
             <div className={`sg-days-badge ${urgencyClass}`}>
               {daysLeft <= 0
                 ? 'Overdue'
@@ -357,6 +362,7 @@ function GoalModal({ editingGoal, onClose, onSave }) {
 export default function SavingsGoals() {
   const [goals, setGoals] = useState([])
   const [transactions, setTransactions] = useState([])
+  const [editingTransactionId, setEditingTransactionId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [transactionError, setTransactionError] = useState('')
@@ -486,8 +492,13 @@ export default function SavingsGoals() {
 
     try {
       setSavingTransaction(true)
-      const res = await fetch(`${API_BASE}/savings-transactions`, {
-        method: 'POST',
+      const isEditing = editingTransactionId !== null
+      const endpoint = isEditing
+        ? `${API_BASE}/savings-transactions/${editingTransactionId}`
+        : `${API_BASE}/savings-transactions`
+
+      const res = await fetch(endpoint, {
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: parseInt(currentUserId, 10),
@@ -499,18 +510,80 @@ export default function SavingsGoals() {
 
       if (!res.ok) {
         const errorData = await res.json()
-        throw new Error(errorData.error || 'Failed to add savings transaction')
+        throw new Error(errorData.error || (isEditing ? 'Failed to update savings transaction' : 'Failed to add savings transaction'))
       }
 
       setTransactionForm((prev) => ({
         ...prev,
+        savingsGoalId: prev.savingsGoalId,
         amount: '',
         date: new Date().toISOString().slice(0, 10),
       }))
+      setEditingTransactionId(null)
 
       await Promise.all([fetchGoals(currentUserId), fetchTransactions(currentUserId)])
     } catch (err) {
-      setTransactionError(err.message || 'Failed to add savings transaction.')
+      setTransactionError(err.message || 'Failed to save savings transaction.')
+    } finally {
+      setSavingTransaction(false)
+    }
+  }
+
+  function handleEditTransaction(tx) {
+    setEditingTransactionId(tx.id)
+    setTransactionForm({
+      savingsGoalId: String(tx.savingsGoalId),
+      amount: String(tx.amount),
+      date: Array.isArray(tx.date)
+        ? `${tx.date[0]}-${String(tx.date[1]).padStart(2, '0')}-${String(tx.date[2]).padStart(2, '0')}`
+        : String(tx.date).slice(0, 10),
+    })
+    setTransactionError('')
+  }
+
+  function handleCancelTransactionEdit() {
+    setEditingTransactionId(null)
+    setTransactionForm((prev) => ({
+      ...prev,
+      amount: '',
+      date: new Date().toISOString().slice(0, 10),
+    }))
+    setTransactionError('')
+  }
+
+  async function handleDeleteTransaction(id) {
+    const currentUserId = userId || localStorage.getItem('userId')
+    if (!currentUserId) {
+      setTransactionError('User ID not found. Please log in again.')
+      return
+    }
+
+    if (!window.confirm('Are you sure you want to delete this savings transaction?')) return
+
+    try {
+      setSavingTransaction(true)
+      const res = await fetch(`${API_BASE}/savings-transactions/${id}?userId=${parseInt(currentUserId, 10)}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        let message = 'Failed to delete savings transaction'
+        try {
+          const errorData = await res.json()
+          message = errorData.error || message
+        } catch {
+          // Ignore parse errors and use default message.
+        }
+        throw new Error(message)
+      }
+
+      if (editingTransactionId === id) {
+        handleCancelTransactionEdit()
+      }
+
+      await Promise.all([fetchGoals(currentUserId), fetchTransactions(currentUserId)])
+    } catch (err) {
+      setTransactionError(err.message || 'Failed to delete savings transaction.')
     } finally {
       setSavingTransaction(false)
     }
@@ -776,7 +849,7 @@ export default function SavingsGoals() {
         {hasGoals && (
           <section className="db-card sg-transactions-section">
             <div className="db-card-header">
-              <h3>Add Savings</h3>
+              <h3>{editingTransactionId ? 'Edit Savings Transaction' : 'Add Savings'}</h3>
               <span className="db-card-tag db-card-tag-blue">updates goal automatically</span>
             </div>
 
@@ -815,8 +888,19 @@ export default function SavingsGoals() {
               />
 
               <button type="submit" className="sg-transaction-submit" disabled={savingTransaction}>
-                {savingTransaction ? 'Saving...' : '+ Add Savings'}
+                {savingTransaction ? 'Saving...' : editingTransactionId ? 'Update Savings' : '+ Add Savings'}
               </button>
+
+              {editingTransactionId && (
+                <button
+                  type="button"
+                  className="sg-transaction-cancel"
+                  onClick={handleCancelTransactionEdit}
+                  disabled={savingTransaction}
+                >
+                  Cancel
+                </button>
+              )}
             </form>
 
             {transactionError && <div className="sg-alert" style={{ marginTop: 12 }}>⚠ {transactionError}</div>}
@@ -828,6 +912,7 @@ export default function SavingsGoals() {
                     <th>Date</th>
                     <th>Savings Goal</th>
                     <th>Amount</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -837,11 +922,31 @@ export default function SavingsGoals() {
                         <td>{formatDate(tx.date)}</td>
                         <td>{goalNameById[tx.savingsGoalId] || 'Unknown goal'}</td>
                         <td>{fmtMoney(tx.amount)}</td>
+                        <td>
+                          <div className="sg-transaction-actions">
+                            <button
+                              type="button"
+                              className="sg-transaction-action sg-transaction-edit"
+                              onClick={() => handleEditTransaction(tx)}
+                              disabled={savingTransaction}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="sg-transaction-action sg-transaction-delete"
+                              onClick={() => handleDeleteTransaction(tx.id)}
+                              disabled={savingTransaction}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="3" className="sg-transaction-empty">
+                      <td colSpan="4" className="sg-transaction-empty">
                         No savings transactions added yet.
                       </td>
                     </tr>
