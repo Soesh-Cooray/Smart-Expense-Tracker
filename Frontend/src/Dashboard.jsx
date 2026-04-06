@@ -167,6 +167,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [subscriptions, setSubscriptions] = useState([])
   const [expenses, setExpenses] = useState([])
+  const [incomes, setIncomes] = useState([])
   const [savingsGoals, setSavingsGoals] = useState([])
   const [totalSubscriptions, setTotalSubscriptions] = useState(0)
   const [loadingData, setLoadingData] = useState(false)
@@ -191,19 +192,22 @@ export default function Dashboard() {
     if (!userId) return
     setLoadingData(true)
     try {
-      const [subsRes, expensesRes, goalsRes] = await Promise.all([
+      const [subsRes, expensesRes, goalsRes, incomesRes] = await Promise.all([
         axios.get(`${API_BASE}/api/subscriptions/user/${userId}`),
         axios.get(`${API_BASE}/api/expenses/user/${userId}`),
         axios.get(`${API_BASE}/savings-goals/user/${userId}`),
+        axios.get(`${API_BASE}/api/income/user/${userId}`),
       ])
 
       const userSubs = Array.isArray(subsRes.data) ? subsRes.data : []
       const userExpenses = Array.isArray(expensesRes.data) ? expensesRes.data : []
       const userGoals = Array.isArray(goalsRes.data) ? goalsRes.data : []
+      const userIncomes = Array.isArray(incomesRes.data) ? incomesRes.data : []
 
       setSubscriptions(userSubs)
       setExpenses(userExpenses)
       setSavingsGoals(userGoals)
+      setIncomes(userIncomes)
       setTotalSubscriptions(
         userSubs
           .filter((sub) => (sub.status || '').toLowerCase() === 'active')
@@ -213,6 +217,7 @@ export default function Dashboard() {
       console.error('Error loading dashboard data:', error)
       setSubscriptions([])
       setExpenses([])
+      setIncomes([])
       setSavingsGoals([])
       setTotalSubscriptions(0)
     } finally {
@@ -235,25 +240,29 @@ export default function Dashboard() {
       .reduce((sum, expense) => sum + Number(expense.amount || 0), 0)
   }, [expenses])
 
-  const totalGoalTarget = useMemo(
-    () => savingsGoals.reduce((sum, goal) => sum + Number(goal.targetAmount || 0), 0),
-    [savingsGoals]
-  )
-
   const totalGoalSaved = useMemo(
     () => savingsGoals.reduce((sum, goal) => sum + Number(goal.savedAmount || 0), 0),
     [savingsGoals]
   )
 
-  const savingsRate = totalGoalTarget > 0 ? Math.round((totalGoalSaved / totalGoalTarget) * 100) : 0
+  const monthlyIncome = useMemo(() => {
+    const now = new Date()
+    return incomes
+      .filter((income) => {
+        const incomeDate = toDate(income.date)
+        if (!incomeDate) return false
+        return incomeDate.getMonth() === now.getMonth() && incomeDate.getFullYear() === now.getFullYear()
+      })
+      .reduce((sum, income) => sum + Number(income.amount || 0), 0)
+  }, [incomes])
 
   const kpis = [
     {
-      label: 'Total Saved',
-      value: formatMoney(totalGoalSaved),
-      change: `${savingsGoals.length} goals`,
+      label: 'Monthly Income',
+      value: formatMoney(monthlyIncome),
+      change: `${incomes.length} total income records`,
       positive: true,
-      icon: '🏦',
+      icon: '💰',
     },
     {
       label: 'Monthly Expenses',
@@ -263,19 +272,21 @@ export default function Dashboard() {
       icon: '📉',
     },
     {
+      label: 'Total Saved',
+      value: formatMoney(totalGoalSaved),
+      change: `${savingsGoals.length} goals`,
+      positive: true,
+      icon: '🏦',
+    },
+    
+    {
       label: 'Active Subscriptions',
       value: formatMoney(totalSubscriptions),
       change: `${subscriptions.filter((s) => (s.status || '').toLowerCase() === 'active').length} active`,
       positive: false,
       icon: '📱',
     },
-    {
-      label: 'Savings Progress',
-      value: `${savingsRate}%`,
-      change: `${formatMoney(totalGoalSaved)} of ${formatMoney(totalGoalTarget)}`,
-      positive: true,
-      icon: '🎯',
-    },
+    
   ]
 
   const categoryTotals = useMemo(() => {
@@ -320,6 +331,48 @@ export default function Dashboard() {
     }
   }, [categoryTotals])
 
+  const incomeCategoryTotals = useMemo(() => {
+    const totals = {}
+    incomes.forEach((income) => {
+      const key = income.category || 'Other'
+      totals[key] = (totals[key] || 0) + Number(income.amount || 0)
+    })
+    return totals
+  }, [incomes])
+
+  const incomeDoughnutData = useMemo(() => {
+    const labels = Object.keys(incomeCategoryTotals)
+    const data = Object.values(incomeCategoryTotals)
+
+    if (!labels.length) {
+      return {
+        labels: ['No income'],
+        datasets: [
+          {
+            data: [1],
+            backgroundColor: ['#cbd5e1'],
+            borderColor: '#fff',
+            borderWidth: 3,
+            hoverOffset: 6,
+          },
+        ],
+      }
+    }
+
+    return {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: labels.map((_, idx) => CHART_COLORS[idx % CHART_COLORS.length]),
+          borderColor: '#fff',
+          borderWidth: 3,
+          hoverOffset: 6,
+        },
+      ],
+    }
+  }, [incomeCategoryTotals])
+
   const lineData = useMemo(() => {
     const now = new Date()
     const months = []
@@ -359,6 +412,46 @@ export default function Dashboard() {
       ],
     }
   }, [expenses])
+
+  const incomeLineData = useMemo(() => {
+    const now = new Date()
+    const months = []
+    const monthTotals = {}
+
+    for (let i = 5; i >= 0; i -= 1) {
+      const month = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`
+      const label = month.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+      months.push({ key, label })
+      monthTotals[key] = 0
+    }
+
+    incomes.forEach((income) => {
+      const date = toDate(income.date)
+      if (!date) return
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      if (Object.prototype.hasOwnProperty.call(monthTotals, key)) {
+        monthTotals[key] += Number(income.amount || 0)
+      }
+    })
+
+    return {
+      labels: months.map((m) => m.label),
+      datasets: [
+        {
+          label: 'Income',
+          data: months.map((m) => monthTotals[m.key]),
+          borderColor: '#16a34a',
+          backgroundColor: 'rgba(22,163,74,0.1)',
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#16a34a',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+      ],
+    }
+  }, [incomes])
 
   const barData = useMemo(() => {
     const topGoals = [...savingsGoals]
@@ -586,6 +679,42 @@ export default function Dashboard() {
                 </div>
                 <div className="db-line-chart">
                   <Line data={lineData} options={lineOptions} />
+                </div>
+              </div>
+            </section>
+
+            <section className="db-charts-row">
+              <div className="db-card db-chart-card">
+                <div className="db-card-header">
+                  <h3>Income Breakdown</h3>
+                  <span className="db-card-tag">By category</span>
+                </div>
+                <div className="db-donut-wrap">
+                  <div className="db-donut-chart">
+                    <Doughnut data={incomeDoughnutData} options={doughnutOptions} />
+                    <div className="db-donut-center">
+                      <strong>{formatMoney(incomes.reduce((sum, income) => sum + Number(income.amount || 0), 0))}</strong>
+                      <span>TOTAL</span>
+                    </div>
+                  </div>
+                  <ul className="db-donut-legend">
+                    {incomeDoughnutData.labels.map((label, i) => (
+                      <li key={label}>
+                        <span className="legend-dot" style={{ background: incomeDoughnutData.datasets[0].backgroundColor[i] }} />
+                        <span className="legend-name">{label}</span>
+                        <span className="legend-val">{formatMoney(incomeDoughnutData.datasets[0].data[i])}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="db-card db-chart-card">
+                <div className="db-card-header">
+                  <h3>6-Month Income Trend</h3>
+                </div>
+                <div className="db-line-chart">
+                  <Line data={incomeLineData} options={lineOptions} />
                 </div>
               </div>
             </section>
