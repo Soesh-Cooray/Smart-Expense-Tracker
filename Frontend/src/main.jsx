@@ -11,6 +11,7 @@ import Dashboard from './Dashboard.jsx'
 import SavingsGoals from './components/savings/SavingsGoals.jsx'
 import IncomeLayout from './components/income/IncomeLayout.jsx'
 import ExpenseLayout from './components/expenses/ExpenseLayout.jsx'
+import AIAnalysisLayout from './components/aiAnalysis/AIAnalysisLayout.jsx'
 import SettingsPage from './components/settings/SettingsPage.jsx'
 
 createRoot(document.getElementById('root')).render(
@@ -26,6 +27,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/goals" element={<SavingsGoals />} />
           <Route path="/income" element={<IncomeLayout />} />
           <Route path="/expenses" element={<ExpenseLayout />} />
+          <Route path="/ai-analysis" element={<AIAnalysisLayout />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </BrowserRouter>

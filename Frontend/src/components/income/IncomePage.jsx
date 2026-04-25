@@ -68,6 +68,7 @@ function IncomeModal({ editingIncome, onClose, onSave }) {
     amount: String(editingIncome.amount),
   } : EMPTY_FORM)
   const [errors, setErrors] = useState({})
+  const today = new Date().toISOString().slice(0, 10)
 
   function onChange(e) {
     const { name, value } = e.target
@@ -80,6 +81,7 @@ function IncomeModal({ editingIncome, onClose, onSave }) {
     if (!form.title.trim()) nextErrors.title = 'Income title is required.'
     if (!form.amount || Number(form.amount) <= 0) nextErrors.amount = 'Enter a valid amount.'
     if (!form.date) nextErrors.date = 'Date is required.'
+    if (form.date && form.date > today) nextErrors.date = 'Cannot select a future date.'
     return nextErrors
   }
 
@@ -143,6 +145,7 @@ function IncomeModal({ editingIncome, onClose, onSave }) {
                 type="date"
                 value={form.date}
                 onChange={onChange}
+                max={today}
                 className={errors.date ? 'error' : ''}
               />
               {errors.date && <span className="inc-error">{errors.date}</span>}

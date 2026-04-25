@@ -7,10 +7,12 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+import logging
 
 # ── App setup ────────────────────────────────────────────────────────────────
 
 app = FastAPI(title="Overspender Classifier API", version="1.0.0")
+logger = logging.getLogger(__name__)
 
 app.add_middleware(
     CORSMiddleware,
@@ -68,22 +70,75 @@ class PredictionResponse(BaseModel):
     window_expense     : float
     window_income      : float
     top_expense_category: str
+    window_start       : Optional[str] = None
+    window_end         : Optional[str] = None
+    message            : str
+
+
+class TrendPoint(BaseModel):
+    window_start       : str
+    window_end         : str
+    probability        : float
+    is_overspender     : bool
+    risk_level         : str
+    top_expense_category: str
+
+
+class TrendResponse(BaseModel):
+    user_id            : str
+    trend              : List[TrendPoint]
+    trend_available    : bool
     message            : str
 
 
 # ── Feature computation ───────────────────────────────────────────────────────
 
-def compute_features(request: PredictionRequest) -> dict:
+def prepare_dataframe(request: PredictionRequest) -> pd.DataFrame:
+    records = [t.dict() for t in request.transactions]
+    df = pd.DataFrame(records)
+    if df.empty:
+        return df
+
+    # The Java backend sends ISO dates (yyyy-MM-dd). Parse that format first,
+    # then fall back to a legacy parser only for older imported records.
+    parsed_dates = pd.to_datetime(df["date"], format="%Y-%m-%d", errors="coerce")
+    if parsed_dates.isna().any():
+        fallback_dates = pd.to_datetime(df.loc[parsed_dates.isna(), "date"], dayfirst=True, errors="coerce")
+        parsed_dates.loc[parsed_dates.isna()] = fallback_dates
+
+    df["date"] = parsed_dates
+    invalid_dates = int(df["date"].isna().sum())
+    if invalid_dates > 0:
+        logger.warning("Dropped %s transactions with invalid dates for user %s", invalid_dates, request.user_id)
+        df = df.dropna(subset=["date"]).copy()
+
+    if df.empty:
+        return df
+
+    if "location" in df.columns:
+        df["location"] = df["location"].fillna("unknown")
+
+    df = df.sort_values("date").reset_index(drop=True)
+    df["year_month"] = df["date"].dt.to_period("M")
+    return df
+
+
+def compute_historical_median_from_df(expense_df: pd.DataFrame) -> float:
+    if expense_df.empty:
+        return 1.0
+
+    monthly_exp = expense_df.groupby("year_month")["amount"].sum()
+    if len(monthly_exp) == 0:
+        return 1.0
+
+    return float(monthly_exp.median()) if monthly_exp.median() > 0 else 1.0
+
+
+def compute_features_from_df(request: PredictionRequest, df: pd.DataFrame) -> tuple[dict, str, str, str]:
     """
     Takes a list of transactions (last 3 months) and computes
     the 31 features the model expects.
     """
-
-    # Parse into DataFrame
-    records = [t.dict() for t in request.transactions]
-    df      = pd.DataFrame(records)
-    df["date"] = pd.to_datetime(df["date"], dayfirst=True)
-    df["year_month"] = df["date"].dt.to_period("M")
 
     # Split income vs expense
     income_mask  = (df["transaction_type"] == "Income") | \
@@ -108,7 +163,7 @@ def compute_features(request: PredictionRequest) -> dict:
     # expense_vs_baseline — compare this window to user's historical median
     historical_median = request.historical_monthly_median
     if historical_median is None or historical_median == 0:
-        historical_median = avg_monthly if avg_monthly > 0 else 1.0
+        historical_median = compute_historical_median_from_df(exp_df)
     expense_vs_baseline = avg_monthly / historical_median
 
     # Category ratios
@@ -129,6 +184,8 @@ def compute_features(request: PredictionRequest) -> dict:
 
     # Top expense category (for response message)
     top_cat = cat_totals.idxmax() if len(cat_totals) > 0 else "unknown"
+    window_start = df["date"].min().date().isoformat() if len(df) > 0 else None
+    window_end = df["date"].max().date().isoformat() if len(df) > 0 else None
 
     features = {
         # Income
@@ -158,7 +215,101 @@ def compute_features(request: PredictionRequest) -> dict:
         "unique_locations"       : int(df["location"].nunique()),
     }
 
-    return features, top_cat
+    return features, top_cat, window_start, window_end
+
+
+def predict_from_df(request: PredictionRequest, df: pd.DataFrame):
+    features, top_cat, window_start, window_end = compute_features_from_df(request, df)
+
+    input_df = pd.DataFrame([features])[FEATURE_COLS]
+    probability = float(model.predict_proba(input_df)[0][1])
+    is_overspender = probability >= THRESHOLD
+
+    if probability < 0.30:
+        risk_level = "Low"
+    elif probability < 0.55:
+        risk_level = "Moderate"
+    else:
+        risk_level = "High"
+
+    if is_overspender:
+        message = (
+            f"⚠️ Overspending detected this period. "
+            f"Highest spend in '{top_cat}' category. "
+            f"Consider reviewing your {top_cat} budget."
+        )
+    else:
+        message = (
+            f"✅ Spending looks healthy this period. "
+            f"Main expense category: '{top_cat}'."
+        )
+
+    return PredictionResponse(
+        user_id=request.user_id,
+        is_overspender=is_overspender,
+        probability=round(probability, 4),
+        risk_level=risk_level,
+        window_expense=features["window_expense"],
+        window_income=features["window_income"],
+        top_expense_category=top_cat,
+        window_start=window_start,
+        window_end=window_end,
+        message=message,
+    )
+
+
+def build_trend_points(request: PredictionRequest, df: pd.DataFrame) -> list[TrendPoint]:
+    monthly_periods = pd.period_range(df["date"].dt.to_period("M").min(), df["date"].dt.to_period("M").max(), freq="M")
+    if len(monthly_periods) < 4:
+        return []
+
+    trend = []
+    global_historical_median = request.historical_monthly_median
+    if global_historical_median is None or global_historical_median == 0:
+        expense_df = df[(df["transaction_type"] == "Expense") & (~df["refined_category"].isin(INCOME_CATEGORIES))]
+        global_historical_median = compute_historical_median_from_df(expense_df)
+
+    for start_index in range(0, len(monthly_periods) - 2):
+        window_start_period = monthly_periods[start_index]
+        window_end_period = monthly_periods[start_index + 2]
+        window_mask = (df["year_month"] >= window_start_period) & (df["year_month"] <= window_end_period)
+        window_df = df[window_mask].copy()
+        if window_df.empty:
+            continue
+
+        window_request = PredictionRequest(
+            user_id=request.user_id,
+            transactions=[],
+            historical_monthly_median=global_historical_median,
+        )
+        prediction = predict_from_df(window_request, window_df)
+        trend.append(
+            TrendPoint(
+                window_start=window_start_period.start_time.date().isoformat(),
+                window_end=window_end_period.end_time.date().isoformat(),
+                probability=prediction.probability,
+                is_overspender=prediction.is_overspender,
+                risk_level=prediction.risk_level,
+                top_expense_category=prediction.top_expense_category,
+            )
+        )
+
+    return trend
+
+
+def summarize_trend(trend: list[TrendPoint]) -> str:
+    if len(trend) < 2:
+        return "Trend analysis available after 3 months of transaction data."
+
+    first = trend[0].probability
+    last = trend[-1].probability
+    delta = last - first
+
+    if delta > 0.05:
+        return f"Your risk has been increasing over the last {len(trend)} windows."
+    if delta < -0.05:
+        return f"Your spending has improved over the last {len(trend)} windows."
+    return f"Your spending risk has stayed fairly steady over the last {len(trend)} windows."
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -186,47 +337,37 @@ def predict(request: PredictionRequest):
 
     # Compute features
     try:
-        features, top_cat = compute_features(request)
+        df = prepare_dataframe(request)
+        if df.empty:
+            raise HTTPException(status_code=400, detail="No valid transactions provided after date parsing.")
+        prediction = predict_from_df(request, df)
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=422, detail=f"Feature computation error: {str(e)}")
+    return prediction
 
-    # Build input DataFrame in correct column order
-    input_df = pd.DataFrame([features])[FEATURE_COLS]
 
-    # Predict
-    probability  = float(model.predict_proba(input_df)[0][1])
-    is_overspender = probability >= THRESHOLD
+@app.post("/predict/trend", response_model=TrendResponse)
+def predict_trend(request: PredictionRequest):
+    if len(request.transactions) == 0:
+        raise HTTPException(status_code=400, detail="No transactions provided.")
 
-    # Risk level
-    if probability < 0.30:
-        risk_level = "Low"
-    elif probability < 0.55:
-        risk_level = "Moderate"
-    else:
-        risk_level = "High"
+    try:
+        df = prepare_dataframe(request)
+        if df.empty:
+            raise HTTPException(status_code=400, detail="No valid transactions provided after date parsing.")
+        trend = build_trend_points(request, df)
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=422, detail=f"Trend computation error: {str(e)}")
 
-    # Human-readable message
-    if is_overspender:
-        message = (
-            f"⚠️ Overspending detected this period. "
-            f"Highest spend in '{top_cat}' category. "
-            f"Consider reviewing your {top_cat} budget."
-        )
-    else:
-        message = (
-            f"✅ Spending looks healthy this period. "
-            f"Main expense category: '{top_cat}'."
-        )
-
-    return PredictionResponse(
-        user_id             = request.user_id,
-        is_overspender      = is_overspender,
-        probability         = round(probability, 4),
-        risk_level          = risk_level,
-        window_expense      = features["window_expense"],
-        window_income       = features["window_income"],
-        top_expense_category= top_cat,
-        message             = message,
+    return TrendResponse(
+        user_id=request.user_id,
+        trend=trend,
+        trend_available=len(trend) > 0,
+        message=summarize_trend(trend),
     )
 
 
