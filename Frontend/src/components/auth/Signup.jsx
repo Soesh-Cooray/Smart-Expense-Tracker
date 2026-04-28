@@ -88,13 +88,13 @@ export default function Signup() {
     password: '',
     confirmPassword: '',
   })
-  const [errors, setErrors]           = useState({})
-  const [showPassword, setShowPassword]       = useState(false)
+  const [errors, setErrors] = useState({})
+  const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [agreedToTerms, setAgreedToTerms]     = useState(false)
-  const [termsError, setTermsError]           = useState('')
-  const [submitting, setSubmitting]           = useState(false)
-  const [formError, setFormError]             = useState('')
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [termsError, setTermsError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
 
   const pwStrength = getPasswordStrength(fields.password)
   const isPasswordStrong = pwStrength.score === 4
@@ -185,7 +185,6 @@ export default function Signup() {
                 {errors.fullName && <p className="auth-field-error">{errors.fullName}</p>}
               </div>
 
-
               <div className="auth-field">
                 <label htmlFor="su-email">Email address</label>
                 <div className="auth-input-wrap">
@@ -229,7 +228,6 @@ export default function Signup() {
                 </div>
                 {errors.password && <p className="auth-field-error">{errors.password}</p>}
 
-                {/* Password strength indicator */}
                 {fields.password && (
                   <div className="auth-pw-strength">
                     <div className="auth-pw-strength-bar">
@@ -243,7 +241,6 @@ export default function Signup() {
                   </div>
                 )}
               </div>
-
 
               <div className="auth-field">
                 <label htmlFor="su-confirm">Confirm password</label>
@@ -272,7 +269,6 @@ export default function Signup() {
                   <p className="auth-field-error">{errors.confirmPassword}</p>
                 )}
               </div>
-
 
               <div className="auth-checkbox-row">
                 <input
