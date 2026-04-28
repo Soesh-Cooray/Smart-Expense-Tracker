@@ -11,32 +11,32 @@ const MODULES = [
   {
     title: 'Financial Dashboard Overview',
     icon: '02',
-    description: 'A real-time snapshot of your money, spending distribution, and monthly trends.',
-    points: ['Balance, income, and expense ', 'Income and expense charts', 'Recent transaction timeline'],
+    description: 'A real-time snapshot of your money with KPIs, spending distribution, and monthly trends.',
+    points: ['Balance, income, and expense KPIs', 'Income vs expense charts', 'Recent transaction timeline'],
   },
   {
     title: 'Income Management',
     icon: '03',
-    description: 'Track all income sources with interactive trend analytics.',
+    description: 'Track all income sources with powerful CRUD operations and interactive trend analytics.',
     points: ['Add, edit, view, and delete records', 'Category and search filters', 'Six-month performance chart'],
   },
   {
     title: 'Subscription Tracking',
     icon: '04',
     description: 'Monitor recurring payments so monthly commitments are always visible and controlled.',
-    points: ['Subscription operations', 'Billing cycle and status controls', 'Total recurring cost summary'],
+    points: ['Subscription CRUD operations', 'Billing cycle and status controls', 'Total recurring cost summary'],
   },
   {
     title: 'Savings Goals Planner',
     icon: '05',
     description: 'Create personalized goals and stay motivated with progress bars and completion insights.',
-    points: ['Goal creation and updates', 'Due-date indicators', 'Progress and distribution visuals'],
+    points: ['Goal creation and updates', 'Due-date urgency indicators', 'Progress and distribution visuals'],
   },
   {
-    title: 'AI Insights',
+    title: 'Smart Alerts and AI Insights',
     icon: '06',
-    description: 'Get data-driven recommendations for smarter financial decisions.',
-    points: ['Spending pattern insights', 'Future-ready AI recommendation layer'],
+    description: 'Get proactive reminders and data-driven recommendations for smarter financial decisions.',
+    points: ['Bill due notifications', 'Spending pattern insights', 'Future-ready AI recommendation layer'],
   },
 ]
 
@@ -104,6 +104,9 @@ function Index() {
             <div className="hero-actions">
               <button className="btn-primary lg" type="button" onClick={() => navigate('/signup')}>
                 Start Free Today
+              </button>
+              <button className="btn-ghost lg" type="button" onClick={() => navigate('/login')}>
+                Explore Demo Flow
               </button>
             </div>
           </div>
@@ -202,7 +205,7 @@ function Index() {
         </section>
       </main>
 
-      <footer className="copyright">Copyright 2026 Nutzy Craft Pvt Ltd. All rights reserved.</footer>
+      <footer className="copyright">Copyright 2026 Smart Expense Tracker. All rights reserved.</footer>
     </div>
   )
 }

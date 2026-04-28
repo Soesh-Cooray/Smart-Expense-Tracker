@@ -39,7 +39,11 @@ function LeftPanel() {
   )
 }
 
+<<<<<<< HEAD
+// ── main component ────────────────────────────────────────────────────────────
+=======
 
+>>>>>>> main
 
 export default function VerifyAccount() {
   const navigate = useNavigate()

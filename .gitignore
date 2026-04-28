@@ -1,2 +1,10 @@
-.vscode/settings.json
-.vscode/launch.json
+node_modules/
+Frontend/node_modules/
+Backend/target/
+target/
+venv/
+AI service/venv/
+__pycache__/
+AI service OLD backup/
+.env
+.idea/

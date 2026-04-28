@@ -4,6 +4,8 @@ import './Auth.css'
 
 const API_BASE = 'http://localhost:8080'
 
+// ── helpers ──────────────────────────────────────────────────────────────────
+
 function validate(fields) {
   const errors = {}
   if (!fields.email.trim()) {
@@ -18,6 +20,8 @@ function validate(fields) {
   }
   return errors
 }
+
+// ── left panel ────────────────────────────────────────────────────────────────
 
 function LeftPanel() {
   return (
@@ -36,15 +40,15 @@ function LeftPanel() {
         <div className="auth-features">
           <div className="auth-feature">
             <span className="auth-feature-icon">📊</span>
-            <span>Budget Management</span>
+            <span>Real-time spending insights</span>
           </div>
           <div className="auth-feature">
             <span className="auth-feature-icon">🎯</span>
-            <span>Savings goal tracking</span>
+            <span>Automated savings goal tracking</span>
           </div>
           <div className="auth-feature">
             <span className="auth-feature-icon">🤖</span>
-            <span>AI-powered expense prediction</span>
+            <span>AI-powered expense categorization</span>
           </div>
         </div>
       </div>
@@ -52,6 +56,7 @@ function LeftPanel() {
   )
 }
 
+// ── main component ────────────────────────────────────────────────────────────
 
 export default function Login() {
   const navigate = useNavigate()
@@ -59,6 +64,7 @@ export default function Login() {
   const [fields, setFields] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -185,10 +191,34 @@ export default function Login() {
                 {errors.password && <p className="auth-field-error">{errors.password}</p>}
               </div>
 
+              {/* Remember me */}
+              <div className="auth-checkbox-row" style={{ marginBottom: 24 }}>
+                <input
+                  id="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span>
+                  <label htmlFor="remember-me">Keep me signed in for 30 days</label>
+                </span>
+              </div>
+
               <button type="submit" className="auth-submit" disabled={submitting}>
                 {submitting ? 'Signing in…' : 'Sign in'}
               </button>
             </form>
+
+            <div className="auth-divider">
+              <div className="auth-divider-line" />
+              <span>or continue with</span>
+              <div className="auth-divider-line" />
+            </div>
+
+            <button type="button" className="auth-oauth-btn">
+              <span className="auth-oauth-icon">G</span>
+              Continue with Google
+            </button>
           </div>
 
           <p className="auth-switch">

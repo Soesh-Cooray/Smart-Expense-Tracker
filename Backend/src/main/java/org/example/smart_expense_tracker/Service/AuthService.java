@@ -179,7 +179,10 @@ public class AuthService {
         savingsTransactionRepository.deleteByUserId(id);
         savingsGoalRepository.deleteByUserId(id);
         subscriptionRepository.deleteByUserId(id);
+
+
         authRepository.deleteIncomeByUserId(id);
+
         authRepository.deleteById(userId);
     }
 }

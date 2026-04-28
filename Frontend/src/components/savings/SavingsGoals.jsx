@@ -43,7 +43,6 @@ function pct(saved, target) {
 
 function parseDate(dueDate) {
   if (!dueDate) return null
-  // Jackson 3.x may return [year, month, day] array instead of a string
   if (Array.isArray(dueDate)) {
     const [y, m, d] = dueDate
     return new Date(y, m - 1, d)
@@ -105,7 +104,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
         </div>
       ) : (
         <>
-
           <div className="sg-card-top">
             <div
               className="sg-icon-bubble"
@@ -136,7 +134,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
             </div>
           )}
 
-          {/* Progress bar */}
           <div className="sg-progress-bg">
             <div
               className="sg-progress-fill"
@@ -144,7 +141,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
             />
           </div>
 
-          {/* Amounts */}
           <div className="sg-card-amounts">
             <span>
               <strong>{fmtMoney(goal.savedAmount)}</strong> saved
@@ -154,7 +150,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
 
           <div className="sg-target-label">Target: {fmtMoney(goal.targetAmount)}</div>
 
-          {/* Actions */}
           <div className="sg-card-actions">
             <button className="sg-btn-edit" onClick={() => onEdit(goal)}>
               ✏ Edit
@@ -168,7 +163,6 @@ function GoalCard({ goal, onEdit, onDelete }) {
     </div>
   )
 }
-
 
 function GoalModal({ editingGoal, onClose, onSave }) {
   const todayDate = new Date().toISOString().slice(0, 10)
@@ -222,7 +216,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
   return (
     <div className="sg-modal-backdrop" onClick={onClose}>
       <div className="sg-modal" onClick={(e) => e.stopPropagation()}>
-        
         <div className="sg-modal-header">
           <h2>{editingGoal ? 'Edit Goal' : 'New Savings Goal'}</h2>
           <button className="sg-modal-close" onClick={onClose} type="button">
@@ -232,7 +225,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="sg-modal-body">
-           
             <div
               className="sg-modal-preview"
               style={{
@@ -256,7 +248,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
               </div>
             </div>
 
-            {/* Name */}
             <div className="sg-form-field">
               <label>Goal name</label>
               <input
@@ -287,7 +278,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
               )}
             </div>
 
-            {/* Due date */}
             <div className="sg-form-field">
               <label>Due date</label>
               <input
@@ -303,7 +293,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
               )}
             </div>
 
-            {/* Icon picker */}
             <div className="sg-form-field">
               <label>Icon</label>
               <div className="sg-icon-grid">
@@ -326,7 +315,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
               </div>
             </div>
 
-            {/* Color picker */}
             <div className="sg-form-field">
               <label>Color</label>
               <div className="sg-color-row">
@@ -344,7 +332,6 @@ function GoalModal({ editingGoal, onClose, onSave }) {
             </div>
           </div>
 
-          {/* Footer buttons */}
           <div className="sg-modal-footer">
             <button type="button" className="sg-btn-cancel" onClick={onClose}>
               Cancel
@@ -377,7 +364,18 @@ export default function SavingsGoals() {
     date: new Date().toISOString().slice(0, 10),
   })
 
-  const fetchGoals = useCallback(async (userIdParam) => {
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId')
+    if (storedUserId) {
+      setUserId(parseInt(storedUserId))
+      fetchGoals(storedUserId)
+    } else {
+      setError('User not logged in. Please log in first.')
+      setLoading(false)
+    }
+  }, [])
+
+  async function fetchGoals(userIdParam) {
     try {
       const id = userIdParam || localStorage.getItem('userId')
       if (!id) {
@@ -436,7 +434,6 @@ export default function SavingsGoals() {
         setError('User ID not found. Please log in again.')
         return
       }
-      
       const url = editingGoal
         ? `${API_BASE}/savings-goals/${editingGoal.id}`
         : `${API_BASE}/savings-goals`
@@ -614,8 +611,6 @@ export default function SavingsGoals() {
     setEditingGoal(null)
   }
 
-  // ── Derived stats ─────────────────────────────────────────────────────────
-
   const totalSaved = goals.reduce((s, g) => s + g.savedAmount, 0)
   const totalTarget = goals.reduce((s, g) => s + g.targetAmount, 0)
   const overallPct = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0
@@ -626,37 +621,11 @@ export default function SavingsGoals() {
   )
 
   const kpis = [
-    {
-      label: 'Total Goals',
-      value: goals.length,
-      icon: '🎯',
-      note: `${completedCount} completed`,
-      pos: true,
-    },
-    {
-      label: 'Total Saved',
-      value: fmtMoney(totalSaved),
-      icon: '💰',
-      note: 'across all goals',
-      pos: true,
-    },
-    {
-      label: 'Total Target',
-      value: fmtMoney(totalTarget),
-      icon: '🏆',
-      note: 'combined targets',
-      pos: true,
-    },
-    {
-      label: 'Overall Progress',
-      value: `${overallPct}%`,
-      icon: '📈',
-      note: 'of total target reached',
-      pos: overallPct > 0,
-    },
+    { label: 'Total Goals', value: goals.length, icon: '🎯', note: `${completedCount} completed`, pos: true },
+    { label: 'Total Saved', value: fmtMoney(totalSaved), icon: '💰', note: 'across all goals', pos: true },
+    { label: 'Total Target', value: fmtMoney(totalTarget), icon: '🏆', note: 'combined targets', pos: true },
+    { label: 'Overall Progress', value: `${overallPct}%`, icon: '📈', note: 'of total target reached', pos: overallPct > 0 },
   ]
-
-  // ── Chart configs ─────────────────────────────────────────────────────────
 
   const hasGoals = goals.length > 0
 
@@ -725,11 +694,7 @@ export default function SavingsGoals() {
         max: 100,
         grid: { color: '#f3f4f6' },
         border: { display: false },
-        ticks: {
-          color: '#9ca3af',
-          font: { size: 12 },
-          callback: (v) => `${v}%`,
-        },
+        ticks: { color: '#9ca3af', font: { size: 12 }, callback: (v) => `${v}%` },
       },
       y: {
         grid: { display: false },
@@ -757,7 +722,6 @@ export default function SavingsGoals() {
       />
 
       <main className="db-main">
-        {/* Header */}
         <header className="db-header">
           <div className="db-header-left">
             <button
@@ -779,10 +743,8 @@ export default function SavingsGoals() {
           </div>
         </header>
 
-        {/* Error banner */}
         {error && <div className="sg-alert">⚠ {error}</div>}
 
-        {/* KPI cards */}
         <section className="db-kpi-grid">
           {kpis.map((k) => (
             <div key={k.label} className="kpi-card">
@@ -799,10 +761,8 @@ export default function SavingsGoals() {
           ))}
         </section>
 
-        {/* Charts — only shown when there are goals */}
         {hasGoals && (
           <section className="sg-charts-row">
-            {/* Doughnut — goal distribution */}
             <div className="db-card sg-chart-card">
               <div className="db-card-header">
                 <h3>Goal Distribution</h3>
@@ -830,7 +790,6 @@ export default function SavingsGoals() {
               </div>
             </div>
 
-            {/* Horizontal bar — progress by goal */}
             <div className="db-card sg-chart-card">
               <div className="db-card-header">
                 <h3>Progress by Goal</h3>
@@ -846,124 +805,10 @@ export default function SavingsGoals() {
           </section>
         )}
 
-        {hasGoals && (
-          <section className="db-card sg-transactions-section">
-            <div className="db-card-header">
-              <h3>{editingTransactionId ? 'Edit Savings Transaction' : 'Add Savings'}</h3>
-              <span className="db-card-tag db-card-tag-blue">updates goal automatically</span>
-            </div>
-
-            <form className="sg-transaction-form" onSubmit={handleAddTransaction}>
-              <select
-                name="savingsGoalId"
-                value={transactionForm.savingsGoalId}
-                onChange={handleTransactionInputChange}
-                required
-              >
-                <option value="">Select savings goal</option>
-                {goals.map((goal) => (
-                  <option key={goal.id} value={goal.id}>
-                    {goal.name}
-                  </option>
-                ))}
-              </select>
-
-              <input
-                name="date"
-                type="date"
-                value={transactionForm.date}
-                onChange={handleTransactionInputChange}
-                required
-              />
-
-              <input
-                name="amount"
-                type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="Amount (Rs.)"
-                value={transactionForm.amount}
-                onChange={handleTransactionInputChange}
-                required
-              />
-
-              <button type="submit" className="sg-transaction-submit" disabled={savingTransaction}>
-                {savingTransaction ? 'Saving...' : editingTransactionId ? 'Update Savings' : '+ Add Savings'}
-              </button>
-
-              {editingTransactionId && (
-                <button
-                  type="button"
-                  className="sg-transaction-cancel"
-                  onClick={handleCancelTransactionEdit}
-                  disabled={savingTransaction}
-                >
-                  Cancel
-                </button>
-              )}
-            </form>
-
-            {transactionError && <div className="sg-alert" style={{ marginTop: 12 }}>⚠ {transactionError}</div>}
-
-            <div className="sg-transaction-table-wrap">
-              <table className="sg-transaction-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Savings Goal</th>
-                    <th>Amount</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.length > 0 ? (
-                    transactions.map((tx) => (
-                      <tr key={tx.id}>
-                        <td>{formatDate(tx.date)}</td>
-                        <td>{goalNameById[tx.savingsGoalId] || 'Unknown goal'}</td>
-                        <td>{fmtMoney(tx.amount)}</td>
-                        <td>
-                          <div className="sg-transaction-actions">
-                            <button
-                              type="button"
-                              className="sg-transaction-action sg-transaction-edit"
-                              onClick={() => handleEditTransaction(tx)}
-                              disabled={savingTransaction}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="sg-transaction-action sg-transaction-delete"
-                              onClick={() => handleDeleteTransaction(tx.id)}
-                              disabled={savingTransaction}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="4" className="sg-transaction-empty">
-                        No savings transactions added yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        {/* Goals grid */}
         <section>
           <div className="db-card-header" style={{ marginBottom: 16 }}>
             <h3 className="sg-section-title">
-              {goals.length > 0
-                ? `All Goals (${goals.length})`
-                : 'Your Goals'}
+              {goals.length > 0 ? `All Goals (${goals.length})` : 'Your Goals'}
             </h3>
             {goals.length > 0 && (
               <button className="db-text-btn" onClick={openAdd}>
