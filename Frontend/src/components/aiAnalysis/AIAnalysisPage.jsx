@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   CartesianGrid,
+  Bar,
+  BarChart,
   Line,
   LineChart,
   ReferenceLine,
@@ -58,6 +60,26 @@ function getRiskScoreLabel(score) {
   return 'Very High — extreme overspending behaviour detected'
 }
 
+function getForecastMonth(point) {
+  return point?.yearMonth ?? point?.year_month ?? null
+}
+
+function getForecastAmount(point) {
+  return Number(point?.predictedAmount ?? point?.predicted_amount ?? 0)
+}
+
+const FORECAST_CATEGORIES = [
+  'food',
+  'travel',
+  'health',
+  'utilities',
+  'rent',
+  'entertainment',
+  'education',
+  'misc',
+  'others',
+]
+
 // ── Dot renderer — colour based on threshold ──────────────────────────────────
 function RiskDot({ cx, cy, payload }) {
   if (cx == null || cy == null || !payload) return null
@@ -98,6 +120,28 @@ function ChartTooltip({ active, payload }) {
       <p className="ai-tooltip-line">
         <span className="ai-tooltip-key">Top Category: </span>
         {point.top_expense_category || point.topExpenseCategory || 'unknown'}
+      </p>
+    </div>
+  )
+}
+
+function ForecastTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null
+  const point = payload[0]?.payload
+  if (!point) return null
+
+  return (
+    <div className="ai-tooltip-box">
+      <p className="ai-tooltip-title">{point.displayMonth}</p>
+      <p className="ai-tooltip-line">
+        <span className="ai-tooltip-key">Predicted Amount: </span>
+        <span className="ai-tooltip-score ai-tooltip-score--forecast">
+          {formatMoney(point.amount)}
+        </span>
+      </p>
+      <p className="ai-tooltip-line">
+        <span className="ai-tooltip-key">Step: </span>
+        {point.step}
       </p>
     </div>
   )
@@ -163,6 +207,11 @@ export default function AIAnalysisPage({ onOpenSidebar }) {
   const [trend, setTrend]                             = useState([])
   const [trendAvailable, setTrendAvailable]           = useState(false)
   const [trendMessage, setTrendMessage]               = useState('')
+  const [forecastCategory, setForecastCategory]       = useState('food')
+  const [forecastMonthsAhead, setForecastMonthsAhead] = useState(3)
+  const [forecastResult, setForecastResult]           = useState(null)
+  const [forecastLoading, setForecastLoading]         = useState(false)
+  const [forecastError, setForecastError]             = useState('')
   const [windowOptions, setWindowOptions]             = useState([])
   const [selectedWindowStart, setSelectedWindowStart] = useState('')
   const [loading, setLoading]                         = useState(true)
@@ -210,6 +259,38 @@ export default function AIAnalysisPage({ onOpenSidebar }) {
       setLoading(false)
     }
   }, [userId, selectedWindowStart])
+
+  const loadForecast = useCallback(async () => {
+    if (!userId) {
+      setForecastError('User not logged in. Please log in first.')
+      return
+    }
+
+    setForecastLoading(true)
+    setForecastError('')
+    try {
+      const res = await fetch(`${API_BASE}/api/prediction/forecast/user/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          category: forecastCategory,
+          monthsAhead: forecastMonthsAhead,
+        }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || 'Failed to generate future forecast.')
+      setForecastResult(data)
+    } catch (err) {
+      console.error('Forecast error:', err)
+      setForecastResult(null)
+      setForecastError(err.message || 'Failed to generate future forecast.')
+    } finally {
+      setForecastLoading(false)
+    }
+  }, [forecastCategory, forecastMonthsAhead, userId])
 
   useEffect(() => {
     if (!userId) {
@@ -261,6 +342,15 @@ export default function AIAnalysisPage({ onOpenSidebar }) {
       score: getRiskScore(point.probability),
     })),
     [trend]
+  )
+
+  const forecastChartData = useMemo(
+    () => (forecastResult?.predictions || []).map((point) => ({
+      ...point,
+      displayMonth: formatMonthLabel(getForecastMonth(point)),
+      amount: getForecastAmount(point),
+    })),
+    [forecastResult]
   )
 
   // gradient offset: where y=40 sits between min and max scores (fraction from top)
@@ -478,6 +568,100 @@ export default function AIAnalysisPage({ onOpenSidebar }) {
               </>
             ) : (
               <p className="ai-muted">{trendMessage || 'Trend analysis available after 3 months of transaction data.'}</p>
+            )}
+          </section>
+
+          {/* Category forecast */}
+          <section className="db-card ai-forecast-card">
+            <div className="db-card-header">
+              <h3>Category Forecast</h3>
+              <span className="db-card-tag db-card-tag-blue">
+                {forecastResult?.predictions?.length ? `${forecastResult.predictions.length} months` : 'Plan ahead'}
+              </span>
+            </div>
+
+            <p className="ai-muted ai-forecast-intro">
+              Predict future monthly spend for a single category using your historical monthly totals.
+            </p>
+
+            <div className="ai-forecast-controls">
+              <label className="ai-forecast-field">
+                <span className="ai-forecast-label">Category</span>
+                <select
+                  className="ai-forecast-select"
+                  value={forecastCategory}
+                  onChange={(e) => setForecastCategory(e.target.value)}
+                  disabled={forecastLoading}
+                >
+                  {FORECAST_CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="ai-forecast-field">
+                <span className="ai-forecast-label">Months ahead</span>
+                <select
+                  className="ai-forecast-select"
+                  value={forecastMonthsAhead}
+                  onChange={(e) => setForecastMonthsAhead(Number(e.target.value))}
+                  disabled={forecastLoading}
+                >
+                  {[1, 2, 3, 4, 5, 6, 9, 12].map((value) => (
+                    <option key={value} value={value}>
+                      {value} month{value > 1 ? 's' : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <button
+                type="button"
+                className="db-add-btn ai-forecast-button"
+                onClick={loadForecast}
+                disabled={forecastLoading}
+              >
+                {forecastLoading ? 'Forecasting…' : 'Generate Forecast'}
+              </button>
+            </div>
+
+            {forecastLoading && (
+              <div className="ai-loading-inline">
+                <div className="ai-spinner" />
+                <p className="ai-muted">Creating future forecast…</p>
+              </div>
+            )}
+
+            {forecastError && <p className="ai-error ai-forecast-error">{forecastError}</p>}
+
+            {forecastResult?.note && !forecastError && !forecastLoading && (
+              <p className="ai-forecast-note">{forecastResult.note}</p>
+            )}
+
+            {!forecastLoading && forecastChartData.length > 0 && (
+              <div className="ai-forecast-chart-wrap">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={forecastChartData} margin={{ top: 10, right: 20, left: 0, bottom: 8 }}>
+                    <CartesianGrid stroke="#e2e8f0" strokeDasharray="4 4" />
+                    <XAxis dataKey="displayMonth" tick={{ fill: '#64748b', fontSize: 12 }} tickLine={false} />
+                    <YAxis
+                      tickFormatter={(value) => `Rs.${Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                      tick={{ fill: '#64748b', fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={80}
+                    />
+                    <Tooltip content={<ForecastTooltip />} />
+                    <Bar dataKey="amount" radius={[10, 10, 0, 0]} fill="#2563eb" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {!forecastLoading && !forecastError && !forecastChartData.length && (
+              <p className="ai-muted">Generate a forecast to see projected spend for the selected category.</p>
             )}
           </section>
 
