@@ -12,6 +12,167 @@
   flex-direction: column;
 }
 
+/* Savings transactions section */
+.sg-transactions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sg-transaction-form {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr auto;
+  gap: 10px;
+}
+
+.sg-transaction-form select,
+.sg-transaction-form input {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+  color: #111827;
+}
+
+.sg-transaction-form select:focus,
+.sg-transaction-form input:focus {
+  outline: none;
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+}
+
+.sg-transaction-submit {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.35);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.sg-transaction-submit:hover {
+  background: #1e40af;
+  box-shadow: 0 6px 18px rgba(29, 78, 216, 0.45);
+}
+
+.sg-transaction-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.sg-transaction-cancel {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sg-transaction-cancel:hover {
+  background: #f9fafb;
+}
+
+.sg-transaction-cancel:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.sg-transaction-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.sg-transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+}
+
+.sg-transaction-table th,
+.sg-transaction-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+  font-size: 13px;
+}
+
+.sg-transaction-table th {
+  color: #475569;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f8fafc;
+}
+
+.sg-transaction-table td:last-child,
+.sg-transaction-table th:last-child {
+  text-align: center;
+}
+
+.sg-transaction-table td:nth-child(3),
+.sg-transaction-table th:nth-child(3) {
+  text-align: right;
+  font-weight: 700;
+}
+
+.sg-transaction-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.sg-transaction-action {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sg-transaction-edit {
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.sg-transaction-edit:hover {
+  background: #dbeafe;
+}
+
+.sg-transaction-delete {
+  color: #dc2626;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.sg-transaction-delete:hover {
+  background: #fee2e2;
+}
+
+.sg-transaction-action:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.sg-transaction-empty {
+  text-align: center !important;
+  color: #94a3b8;
+}
+
 .sg-donut-wrap {
   display: flex;
   gap: 20px;
@@ -628,6 +789,10 @@
     flex-direction: row;
     justify-content: center;
   }
+
+  .sg-transaction-form {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 900px) {
@@ -642,6 +807,10 @@
   }
 
   .sg-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .sg-transaction-form {
     grid-template-columns: 1fr;
   }
 

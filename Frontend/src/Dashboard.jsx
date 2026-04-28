@@ -124,6 +124,12 @@ function categoryIcon(category) {
   return '💸'
 }
 
+function transactionIcon(type, category) {
+  if (type === 'income') return '💰'
+  if (type === 'savings') return '🎯'
+  return categoryIcon(category)
+}
+
 function KpiCard({ kpi }) {
   return (
     <div className="kpi-card">
@@ -165,8 +171,12 @@ export default function Dashboard() {
   const location = useLocation()
   const activeNav = new URLSearchParams(location.search).get('tab') || 'overview'
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [expenseBreakdownRange, setExpenseBreakdownRange] = useState('all')
+  const [incomeBreakdownRange, setIncomeBreakdownRange] = useState('all')
   const [subscriptions, setSubscriptions] = useState([])
   const [expenses, setExpenses] = useState([])
+  const [incomes, setIncomes] = useState([])
+  const [savingsTransactions, setSavingsTransactions] = useState([])
   const [savingsGoals, setSavingsGoals] = useState([])
   const [totalSubscriptions, setTotalSubscriptions] = useState(0)
   const [loadingData, setLoadingData] = useState(false)
@@ -191,19 +201,25 @@ export default function Dashboard() {
     if (!userId) return
     setLoadingData(true)
     try {
-      const [subsRes, expensesRes, goalsRes] = await Promise.all([
+      const [subsRes, expensesRes, goalsRes, incomesRes, savingsTxRes] = await Promise.all([
         axios.get(`${API_BASE}/api/subscriptions/user/${userId}`),
         axios.get(`${API_BASE}/api/expenses/user/${userId}`),
         axios.get(`${API_BASE}/savings-goals/user/${userId}`),
+        axios.get(`${API_BASE}/api/income/user/${userId}`),
+        axios.get(`${API_BASE}/savings-transactions/user/${userId}`),
       ])
 
       const userSubs = Array.isArray(subsRes.data) ? subsRes.data : []
       const userExpenses = Array.isArray(expensesRes.data) ? expensesRes.data : []
       const userGoals = Array.isArray(goalsRes.data) ? goalsRes.data : []
+      const userIncomes = Array.isArray(incomesRes.data) ? incomesRes.data : []
+      const userSavingsTransactions = Array.isArray(savingsTxRes.data) ? savingsTxRes.data : []
 
       setSubscriptions(userSubs)
       setExpenses(userExpenses)
       setSavingsGoals(userGoals)
+      setIncomes(userIncomes)
+      setSavingsTransactions(userSavingsTransactions)
       setTotalSubscriptions(
         userSubs
           .filter((sub) => (sub.status || '').toLowerCase() === 'active')
@@ -213,6 +229,8 @@ export default function Dashboard() {
       console.error('Error loading dashboard data:', error)
       setSubscriptions([])
       setExpenses([])
+      setIncomes([])
+      setSavingsTransactions([])
       setSavingsGoals([])
       setTotalSubscriptions(0)
     } finally {
@@ -235,19 +253,55 @@ export default function Dashboard() {
       .reduce((sum, expense) => sum + Number(expense.amount || 0), 0)
   }, [expenses])
 
-  const totalGoalTarget = useMemo(
-    () => savingsGoals.reduce((sum, goal) => sum + Number(goal.targetAmount || 0), 0),
-    [savingsGoals]
-  )
+  const monthlyExpenseCount = useMemo(() => {
+    const now = new Date()
+    return expenses.filter((expense) => {
+      const expenseDate = toDate(expense.date)
+      if (!expenseDate) return false
+      return expenseDate.getMonth() === now.getMonth() && expenseDate.getFullYear() === now.getFullYear()
+    }).length
+  }, [expenses])
 
   const totalGoalSaved = useMemo(
     () => savingsGoals.reduce((sum, goal) => sum + Number(goal.savedAmount || 0), 0),
     [savingsGoals]
   )
 
-  const savingsRate = totalGoalTarget > 0 ? Math.round((totalGoalSaved / totalGoalTarget) * 100) : 0
+  const monthlyIncome = useMemo(() => {
+    const now = new Date()
+    return incomes
+      .filter((income) => {
+        const incomeDate = toDate(income.date)
+        if (!incomeDate) return false
+        return incomeDate.getMonth() === now.getMonth() && incomeDate.getFullYear() === now.getFullYear()
+      })
+      .reduce((sum, income) => sum + Number(income.amount || 0), 0)
+  }, [incomes])
+
+  const monthlyIncomeCount = useMemo(() => {
+    const now = new Date()
+    return incomes.filter((income) => {
+      const incomeDate = toDate(income.date)
+      if (!incomeDate) return false
+      return incomeDate.getMonth() === now.getMonth() && incomeDate.getFullYear() === now.getFullYear()
+    }).length
+  }, [incomes])
 
   const kpis = [
+    {
+      label: 'Monthly Income',
+      value: formatMoney(monthlyIncome),
+      change: `${monthlyIncomeCount} monthly income record${monthlyIncomeCount === 1 ? '' : 's'}`,
+      positive: true,
+      icon: '💰',
+    },
+    {
+      label: 'Monthly Expenses',
+      value: formatMoney(monthlyExpenses),
+      change: `${monthlyExpenseCount} monthly expense record${monthlyExpenseCount === 1 ? '' : 's'}`,
+      positive: false,
+      icon: '📉',
+    },
     {
       label: 'Total Saved',
       value: formatMoney(totalGoalSaved),
@@ -255,13 +309,7 @@ export default function Dashboard() {
       positive: true,
       icon: '🏦',
     },
-    {
-      label: 'Monthly Expenses',
-      value: formatMoney(monthlyExpenses),
-      change: `${expenses.length} total expenses`,
-      positive: false,
-      icon: '📉',
-    },
+    
     {
       label: 'Active Subscriptions',
       value: formatMoney(totalSubscriptions),
@@ -269,23 +317,47 @@ export default function Dashboard() {
       positive: false,
       icon: '📱',
     },
-    {
-      label: 'Savings Progress',
-      value: `${savingsRate}%`,
-      change: `${formatMoney(totalGoalSaved)} of ${formatMoney(totalGoalTarget)}`,
-      positive: true,
-      icon: '🎯',
-    },
+    
   ]
+
+  const expenseBreakdownRecords = useMemo(() => {
+    if (expenseBreakdownRange === 'all') return expenses
+    const now = new Date()
+    return expenses.filter((expense) => {
+      const expenseDate = toDate(expense.date)
+      if (!expenseDate) return false
+      return expenseDate.getMonth() === now.getMonth() && expenseDate.getFullYear() === now.getFullYear()
+    })
+  }, [expenses, expenseBreakdownRange])
+
+  const incomeBreakdownRecords = useMemo(() => {
+    if (incomeBreakdownRange === 'all') return incomes
+    const now = new Date()
+    return incomes.filter((income) => {
+      const incomeDate = toDate(income.date)
+      if (!incomeDate) return false
+      return incomeDate.getMonth() === now.getMonth() && incomeDate.getFullYear() === now.getFullYear()
+    })
+  }, [incomes, incomeBreakdownRange])
+
+  const expenseBreakdownTotal = useMemo(
+    () => expenseBreakdownRecords.reduce((sum, e) => sum + Number(e.amount || 0), 0),
+    [expenseBreakdownRecords]
+  )
+
+  const incomeBreakdownTotal = useMemo(
+    () => incomeBreakdownRecords.reduce((sum, i) => sum + Number(i.amount || 0), 0),
+    [incomeBreakdownRecords]
+  )
 
   const categoryTotals = useMemo(() => {
     const totals = {}
-    expenses.forEach((expense) => {
+    expenseBreakdownRecords.forEach((expense) => {
       const key = expense.category || 'Other'
       totals[key] = (totals[key] || 0) + Number(expense.amount || 0)
     })
     return totals
-  }, [expenses])
+  }, [expenseBreakdownRecords])
 
   const doughnutData = useMemo(() => {
     const labels = Object.keys(categoryTotals)
@@ -319,6 +391,48 @@ export default function Dashboard() {
       ],
     }
   }, [categoryTotals])
+
+  const incomeCategoryTotals = useMemo(() => {
+    const totals = {}
+    incomeBreakdownRecords.forEach((income) => {
+      const key = income.category || 'Other'
+      totals[key] = (totals[key] || 0) + Number(income.amount || 0)
+    })
+    return totals
+  }, [incomeBreakdownRecords])
+
+  const incomeDoughnutData = useMemo(() => {
+    const labels = Object.keys(incomeCategoryTotals)
+    const data = Object.values(incomeCategoryTotals)
+
+    if (!labels.length) {
+      return {
+        labels: ['No income'],
+        datasets: [
+          {
+            data: [1],
+            backgroundColor: ['#cbd5e1'],
+            borderColor: '#fff',
+            borderWidth: 3,
+            hoverOffset: 6,
+          },
+        ],
+      }
+    }
+
+    return {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: labels.map((_, idx) => CHART_COLORS[idx % CHART_COLORS.length]),
+          borderColor: '#fff',
+          borderWidth: 3,
+          hoverOffset: 6,
+        },
+      ],
+    }
+  }, [incomeCategoryTotals])
 
   const lineData = useMemo(() => {
     const now = new Date()
@@ -360,6 +474,46 @@ export default function Dashboard() {
     }
   }, [expenses])
 
+  const incomeLineData = useMemo(() => {
+    const now = new Date()
+    const months = []
+    const monthTotals = {}
+
+    for (let i = 5; i >= 0; i -= 1) {
+      const month = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`
+      const label = month.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+      months.push({ key, label })
+      monthTotals[key] = 0
+    }
+
+    incomes.forEach((income) => {
+      const date = toDate(income.date)
+      if (!date) return
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      if (Object.prototype.hasOwnProperty.call(monthTotals, key)) {
+        monthTotals[key] += Number(income.amount || 0)
+      }
+    })
+
+    return {
+      labels: months.map((m) => m.label),
+      datasets: [
+        {
+          label: 'Income',
+          data: months.map((m) => monthTotals[m.key]),
+          borderColor: '#16a34a',
+          backgroundColor: 'rgba(22,163,74,0.1)',
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#16a34a',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+      ],
+    }
+  }, [incomes])
+
   const barData = useMemo(() => {
     const topGoals = [...savingsGoals]
       .sort((a, b) => Number(b.targetAmount || 0) - Number(a.targetAmount || 0))
@@ -371,7 +525,7 @@ export default function Dashboard() {
         {
           label: 'Saved Amount',
           data: topGoals.map((goal) => Number(goal.savedAmount || 0)),
-          backgroundColor: 'rgba(29,78,216,0.85)',
+          backgroundColor: topGoals.map((goal, idx) => goal.color || CHART_COLORS[idx % CHART_COLORS.length]),
           borderRadius: 6,
           borderSkipped: false,
         },
@@ -379,13 +533,50 @@ export default function Dashboard() {
     }
   }, [savingsGoals])
 
-  const recentTransactions = useMemo(
-    () =>
-      [...expenses]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 8),
-    [expenses]
+  const goalNameById = useMemo(
+    () => Object.fromEntries(savingsGoals.map((goal) => [goal.id, goal.name])),
+    [savingsGoals]
   )
+
+  const recentTransactions = useMemo(() => {
+    const expenseTx = expenses.map((expense) => ({
+      id: `expense-${expense.id}`,
+      type: 'expense',
+      date: expense.date,
+      amount: Number(expense.amount || 0),
+      name: expense.description || expense.title || 'Expense',
+      detail: expense.category || 'Other',
+      category: expense.category,
+    }))
+
+    const incomeTx = incomes.map((income) => ({
+      id: `income-${income.id}`,
+      type: 'income',
+      date: income.date,
+      amount: Number(income.amount || 0),
+      name: income.title || income.description || 'Income',
+      detail: income.category || 'Other',
+      category: income.category,
+    }))
+
+    const savingsTx = savingsTransactions.map((tx) => ({
+      id: `savings-${tx.id}`,
+      type: 'savings',
+      date: tx.date,
+      amount: Number(tx.amount || 0),
+      name: 'Savings',
+      detail: goalNameById[tx.savingsGoalId] || 'Goal',
+      category: 'Savings',
+    }))
+
+    return [...expenseTx, ...incomeTx, ...savingsTx]
+      .sort((a, b) => {
+        const dateA = toDate(a.date)
+        const dateB = toDate(b.date)
+        return (dateB?.getTime() || 0) - (dateA?.getTime() || 0)
+      })
+      .slice(0, 5)
+  }, [expenses, incomes, savingsTransactions, goalNameById])
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -558,13 +749,22 @@ export default function Dashboard() {
               <div className="db-card db-chart-card">
                 <div className="db-card-header">
                   <h3>Expense Breakdown</h3>
-                  <span className="db-card-tag">By category</span>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      className="db-text-btn"
+                      onClick={() => setExpenseBreakdownRange((prev) => (prev === 'all' ? 'month' : 'all'))}
+                    >
+                      {expenseBreakdownRange === 'all' ? 'Current Month' : 'All Time'}
+                    </button>
+                    <span className="db-card-tag">{expenseBreakdownRange === 'all' ? 'All time' : 'Current month'}</span>
+                  </div>
                 </div>
                 <div className="db-donut-wrap">
                   <div className="db-donut-chart">
                     <Doughnut data={doughnutData} options={doughnutOptions} />
                     <div className="db-donut-center">
-                      <strong>{formatMoney(expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0))}</strong>
+                      <strong>{formatMoney(expenseBreakdownTotal)}</strong>
                       <span>TOTAL</span>
                     </div>
                   </div>
@@ -586,6 +786,51 @@ export default function Dashboard() {
                 </div>
                 <div className="db-line-chart">
                   <Line data={lineData} options={lineOptions} />
+                </div>
+              </div>
+            </section>
+
+            <section className="db-charts-row">
+              <div className="db-card db-chart-card">
+                <div className="db-card-header">
+                  <h3>Income Breakdown</h3>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      className="db-text-btn"
+                      onClick={() => setIncomeBreakdownRange((prev) => (prev === 'all' ? 'month' : 'all'))}
+                    >
+                      {incomeBreakdownRange === 'all' ? 'Current Month' : 'All Time'}
+                    </button>
+                    <span className="db-card-tag">{incomeBreakdownRange === 'all' ? 'All time' : 'Current month'}</span>
+                  </div>
+                </div>
+                <div className="db-donut-wrap">
+                  <div className="db-donut-chart">
+                    <Doughnut data={incomeDoughnutData} options={doughnutOptions} />
+                    <div className="db-donut-center">
+                      <strong>{formatMoney(incomeBreakdownTotal)}</strong>
+                      <span>TOTAL</span>
+                    </div>
+                  </div>
+                  <ul className="db-donut-legend">
+                    {incomeDoughnutData.labels.map((label, i) => (
+                      <li key={label}>
+                        <span className="legend-dot" style={{ background: incomeDoughnutData.datasets[0].backgroundColor[i] }} />
+                        <span className="legend-name">{label}</span>
+                        <span className="legend-val">{formatMoney(incomeDoughnutData.datasets[0].data[i])}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="db-card db-chart-card">
+                <div className="db-card-header">
+                  <h3>6-Month Income Trend</h3>
+                </div>
+                <div className="db-line-chart">
+                  <Line data={incomeLineData} options={lineOptions} />
                 </div>
               </div>
             </section>
@@ -722,23 +967,25 @@ export default function Dashboard() {
 
               <div className="db-card db-tx-card">
                 <div className="db-card-header">
-                  <h3>Recent Expenses</h3>
+                  <h3>Recent Transactions</h3>
                 </div>
                 <ul className="db-tx-list">
                   {recentTransactions.length > 0 ? (
                     recentTransactions.map((tx) => (
                       <li key={tx.id} className="db-tx-item">
-                        <span className="db-tx-icon">{categoryIcon(tx.category)}</span>
+                        <span className="db-tx-icon">{transactionIcon(tx.type, tx.category)}</span>
                         <div className="db-tx-info">
-                          <span className="db-tx-name">{tx.description || tx.title || 'Expense'}</span>
-                          <span className="db-tx-meta">{tx.category || 'Other'} · {formatDate(tx.date)}</span>
+                          <span className="db-tx-name">{tx.name}</span>
+                          <span className="db-tx-meta">{tx.type.charAt(0).toUpperCase() + tx.type.slice(1)} · {tx.detail} · {formatDate(tx.date)}</span>
                         </div>
-                        <span className="db-tx-amount neg">-{formatMoney(tx.amount)}</span>
+                        <span className={`db-tx-amount ${tx.type === 'expense' ? 'neg' : tx.type === 'income' ? 'pos' : 'neutral'}`}>
+                          {tx.type === 'expense' ? '-' : '+'}{formatMoney(tx.amount)}
+                        </span>
                       </li>
                     ))
                   ) : (
                     <li className="db-tx-item">
-                      <span className="db-tx-meta">No expenses found for this user.</span>
+                      <span className="db-tx-meta">No recent transactions found for this user.</span>
                     </li>
                   )}
                 </ul>

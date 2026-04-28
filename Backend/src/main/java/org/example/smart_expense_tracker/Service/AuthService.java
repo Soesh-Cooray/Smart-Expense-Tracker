@@ -9,6 +9,7 @@ import org.example.smart_expense_tracker.Model.Users;
 import org.example.smart_expense_tracker.Repository.Auth;
 import org.example.smart_expense_tracker.Repository.ExpenseRepository;
 import org.example.smart_expense_tracker.Repository.SavingsGoalRepository;
+import org.example.smart_expense_tracker.Repository.SavingsTransactionRepository;
 import org.example.smart_expense_tracker.Repository.SubscriptionRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class AuthService {
     private final ExpenseRepository expenseRepository;
     private final SavingsGoalRepository savingsGoalRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final SavingsTransactionRepository savingsTransactionRepository;
     private final EmailService emailService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -174,6 +176,7 @@ public class AuthService {
 
         Long id = Long.valueOf(userId);
         expenseRepository.deleteByUserId(id);
+        savingsTransactionRepository.deleteByUserId(id);
         savingsGoalRepository.deleteByUserId(id);
         subscriptionRepository.deleteByUserId(id);
 

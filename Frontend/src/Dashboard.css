@@ -886,6 +886,7 @@
 
 .db-tx-amount.pos { color: #16a34a; }
 .db-tx-amount.neg { color: #ef4444; }
+.db-tx-amount.neutral { color: #1d4ed8; }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 
