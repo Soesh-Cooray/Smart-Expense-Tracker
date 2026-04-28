@@ -9,7 +9,7 @@ import VerifyAccount from './components/auth/VerifyAccount.jsx'
 import ForgotPassword from './components/auth/ForgotPassword.jsx'
 import Dashboard from './Dashboard.jsx'
 import SavingsGoals from './components/savings/SavingsGoals.jsx'
-import App from './App.jsx'
+import BudgetLayout from './components/budget/BudgetLayout.jsx'
 import IncomeLayout from './components/income/IncomeLayout.jsx'
 import ExpenseLayout from './components/expenses/ExpenseLayout.jsx'
 import AIAnalysisLayout from './components/aiAnalysis/AIAnalysisLayout.jsx'
@@ -25,6 +25,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/verify" element={<VerifyAccount />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/budgets" element={<BudgetLayout />} />
           <Route path="/goals" element={<SavingsGoals />} />
           <Route path="/income" element={<IncomeLayout />} />
           <Route path="/expenses" element={<ExpenseLayout />} />

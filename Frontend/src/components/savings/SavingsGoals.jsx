@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Chart as ChartJS,
   ArcElement,
@@ -348,34 +348,14 @@ function GoalModal({ editingGoal, onClose, onSave }) {
 
 export default function SavingsGoals() {
   const [goals, setGoals] = useState([])
-  const [transactions, setTransactions] = useState([])
-  const [editingTransactionId, setEditingTransactionId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [transactionError, setTransactionError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingGoal, setEditingGoal] = useState(null)
   const [userId, setUserId] = useState(null)
-  const [savingTransaction, setSavingTransaction] = useState(false)
-  const [transactionForm, setTransactionForm] = useState({
-    savingsGoalId: '',
-    amount: '',
-    date: new Date().toISOString().slice(0, 10),
-  })
 
-  useEffect(() => {
-    const storedUserId = localStorage.getItem('userId')
-    if (storedUserId) {
-      setUserId(parseInt(storedUserId))
-      fetchGoals(storedUserId)
-    } else {
-      setError('User not logged in. Please log in first.')
-      setLoading(false)
-    }
-  }, [])
-
-  async function fetchGoals(userIdParam) {
+  const fetchGoals = useCallback(async (userIdParam) => {
     try {
       const id = userIdParam || localStorage.getItem('userId')
       if (!id) {
@@ -386,10 +366,6 @@ export default function SavingsGoals() {
       if (!res.ok) throw new Error()
       const goalData = await res.json()
       setGoals(goalData)
-      setTransactionForm((prev) => ({
-        ...prev,
-        savingsGoalId: prev.savingsGoalId || (goalData[0]?.id ? String(goalData[0].id) : ''),
-      }))
       setError('')
     } catch {
       setError('Could not connect to the server. Make sure the backend is running.')
@@ -398,34 +374,17 @@ export default function SavingsGoals() {
     }
   }, [])
 
-  const fetchTransactions = useCallback(async (userIdParam) => {
-    try {
-      const id = userIdParam || userId || localStorage.getItem('userId')
-      if (!id) return
-      const res = await fetch(`${API_BASE}/savings-transactions/user/${id}`)
-      if (!res.ok) throw new Error()
-      const txData = await res.json()
-      setTransactions(Array.isArray(txData) ? txData : [])
-      setTransactionError('')
-    } catch {
-      setTransactions([])
-      setTransactionError('Could not load savings transactions.')
-    }
-  }, [userId])
-
   useEffect(() => {
-    // Get user ID from localStorage
     const storedUserId = localStorage.getItem('userId')
     if (storedUserId) {
       const parsedUserId = parseInt(storedUserId, 10)
       setUserId(parsedUserId)
       fetchGoals(parsedUserId)
-      fetchTransactions(parsedUserId)
     } else {
       setError('User not logged in. Please log in first.')
       setLoading(false)
     }
-  }, [fetchGoals, fetchTransactions])
+  }, [fetchGoals])
 
   async function handleSave(data) {
     try {
@@ -457,134 +416,11 @@ export default function SavingsGoals() {
     }
   }
 
-  function handleTransactionInputChange(e) {
-    const { name, value } = e.target
-    setTransactionForm((prev) => ({ ...prev, [name]: value }))
-  }
-
-  async function handleAddTransaction(e) {
-    e.preventDefault()
-    setTransactionError('')
-
-    const currentUserId = userId || localStorage.getItem('userId')
-    if (!currentUserId) {
-      setTransactionError('User ID not found. Please log in again.')
-      return
-    }
-
-    if (!transactionForm.savingsGoalId) {
-      setTransactionError('Please select a savings goal.')
-      return
-    }
-
-    if (!transactionForm.date) {
-      setTransactionError('Please select a date.')
-      return
-    }
-
-    if (!transactionForm.amount || Number(transactionForm.amount) <= 0) {
-      setTransactionError('Enter a valid amount greater than 0.')
-      return
-    }
-
-    try {
-      setSavingTransaction(true)
-      const isEditing = editingTransactionId !== null
-      const endpoint = isEditing
-        ? `${API_BASE}/savings-transactions/${editingTransactionId}`
-        : `${API_BASE}/savings-transactions`
-
-      const res = await fetch(endpoint, {
-        method: isEditing ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: parseInt(currentUserId, 10),
-          savingsGoalId: Number(transactionForm.savingsGoalId),
-          amount: Number(transactionForm.amount),
-          date: transactionForm.date,
-        }),
-      })
-
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.error || (isEditing ? 'Failed to update savings transaction' : 'Failed to add savings transaction'))
-      }
-
-      setTransactionForm((prev) => ({
-        ...prev,
-        savingsGoalId: prev.savingsGoalId,
-        amount: '',
-        date: new Date().toISOString().slice(0, 10),
-      }))
-      setEditingTransactionId(null)
-
-      await Promise.all([fetchGoals(currentUserId), fetchTransactions(currentUserId)])
-    } catch (err) {
-      setTransactionError(err.message || 'Failed to save savings transaction.')
-    } finally {
-      setSavingTransaction(false)
-    }
-  }
-
-  function handleEditTransaction(tx) {
-    setEditingTransactionId(tx.id)
-    setTransactionForm({
-      savingsGoalId: String(tx.savingsGoalId),
-      amount: String(tx.amount),
-      date: Array.isArray(tx.date)
-        ? `${tx.date[0]}-${String(tx.date[1]).padStart(2, '0')}-${String(tx.date[2]).padStart(2, '0')}`
-        : String(tx.date).slice(0, 10),
-    })
-    setTransactionError('')
-  }
-
-  function handleCancelTransactionEdit() {
-    setEditingTransactionId(null)
-    setTransactionForm((prev) => ({
-      ...prev,
-      amount: '',
-      date: new Date().toISOString().slice(0, 10),
-    }))
-    setTransactionError('')
-  }
-
-  async function handleDeleteTransaction(id) {
-    const currentUserId = userId || localStorage.getItem('userId')
-    if (!currentUserId) {
-      setTransactionError('User ID not found. Please log in again.')
-      return
-    }
-
-    if (!window.confirm('Are you sure you want to delete this savings transaction?')) return
-
-    try {
-      setSavingTransaction(true)
-      const res = await fetch(`${API_BASE}/savings-transactions/${id}?userId=${parseInt(currentUserId, 10)}`, {
-        method: 'DELETE',
-      })
-
-      if (!res.ok) {
-        let message = 'Failed to delete savings transaction'
-        try {
-          const errorData = await res.json()
-          message = errorData.error || message
-        } catch {
-          // Ignore parse errors and use default message.
-        }
-        throw new Error(message)
-      }
-
-      if (editingTransactionId === id) {
-        handleCancelTransactionEdit()
-      }
-
-      await Promise.all([fetchGoals(currentUserId), fetchTransactions(currentUserId)])
-    } catch (err) {
-      setTransactionError(err.message || 'Failed to delete savings transaction.')
-    } finally {
-      setSavingTransaction(false)
-    }
-  }
+  // Transaction handlers - to be implemented when adding transaction UI
+  // function handleTransactionInputChange(e) {}
+  // async function handleAddTransaction(e) {}
+  // function handleEditTransaction(tx) {}
+  // async function handleDeleteTransaction(id) {}
 
   async function handleDelete(id) {
     try {
@@ -615,10 +451,6 @@ export default function SavingsGoals() {
   const totalTarget = goals.reduce((s, g) => s + g.targetAmount, 0)
   const overallPct = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0
   const completedCount = goals.filter((g) => pct(g.savedAmount, g.targetAmount) >= 100).length
-  const goalNameById = useMemo(
-    () => Object.fromEntries(goals.map((goal) => [goal.id, goal.name])),
-    [goals]
-  )
 
   const kpis = [
     { label: 'Total Goals', value: goals.length, icon: '🎯', note: `${completedCount} completed`, pos: true },

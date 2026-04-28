@@ -1,241 +1,387 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import './Auth.css'
-
-const API_BASE = 'http://localhost:8080'
-
-function getPasswordStrength(pw) {
-  if (!pw) return { score: 0, label: '', cls: '' }
-  let score = 0
-  if (pw.length >= 8) score++
-  if (/[A-Z]/.test(pw)) score++
-  if (/[0-9]/.test(pw)) score++
-  if (/[^A-Za-z0-9]/.test(pw)) score++
-  const map = [
-    { label: 'Weak', cls: 'weak' },
-    { label: 'Weak', cls: 'weak' },
-    { label: 'Fair', cls: 'fair' },
-    { label: 'Good', cls: 'good' },
-    { label: 'Strong', cls: 'strong' },
-  ]
-  return { score, ...map[score] }
+:root {
+  --auth-bg-1: #eef4ff;
+  --auth-bg-2: #f8fbff;
+  --auth-card: #ffffff;
+  --auth-border: #e5e7eb;
+  --auth-text: #111827;
+  --auth-muted: #6b7280;
+  --auth-brand: #1d4ed8;
+  --auth-brand-dark: #1e40af;
+  --auth-danger-bg: #fef2f2;
+  --auth-danger-text: #b91c1c;
+  --auth-success-bg: #ecfdf5;
+  --auth-success-text: #065f46;
 }
 
-function LeftPanel() {
-  return (
-    <div className="auth-left">
-      <div className="auth-left-brand">
-        <span className="auth-left-brand-icon">S</span>
-        <span className="auth-left-brand-name">SmartExpense</span>
-      </div>
-      <div className="auth-left-body">
-        <h2>Reset your password securely.</h2>
-        <p>Enter your account email to receive a 6-digit reset code. Then set a new password and continue.</p>
-        <div className="auth-features">
-          <div className="auth-feature">
-            <span className="auth-feature-icon">✉</span>
-            <span>Receive a one-time reset code in your email</span>
-          </div>
-          <div className="auth-feature">
-            <span className="auth-feature-icon">⏱</span>
-            <span>Code expires in 10 minutes for your safety</span>
-          </div>
-          <div className="auth-feature">
-            <span className="auth-feature-icon">🔐</span>
-            <span>Create a new password and sign in again</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+* {
+  box-sizing: border-box;
 }
 
-export default function ForgotPassword() {
-  const navigate = useNavigate()
-  const [step, setStep] = useState(1)
-  const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [formError, setFormError] = useState('')
-  const [success, setSuccess] = useState('')
-  const pwStrength = getPasswordStrength(newPassword)
-  const isPasswordStrong = pwStrength.score === 4
+.auth-root {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(320px, 42%) 1fr;
+  background: radial-gradient(circle at 20% 10%, var(--auth-bg-1), var(--auth-bg-2) 50%);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
 
-  const strengthSegClass = (idx) => {
-    if (pwStrength.score > idx) return `auth-pw-strength-seg filled-${pwStrength.cls}`
-    return 'auth-pw-strength-seg'
+.auth-left {
+  padding: 40px 36px;
+  color: #f8fafc;
+  background: linear-gradient(145deg, #0f172a, #1e3a8a 55%, #3b82f6);
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-left-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 34px;
+}
+
+.auth-left-brand-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.auth-left-brand-name {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.auth-left-body h2 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.auth-left-body p {
+  margin: 14px 0 26px;
+  color: rgba(248, 250, 252, 0.9);
+  line-height: 1.65;
+}
+
+.auth-features {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.auth-feature-icon {
+  width: 26px;
+  display: inline-grid;
+  place-items: center;
+}
+
+.auth-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.auth-form-wrap {
+  width: 100%;
+  max-width: 520px;
+}
+
+.auth-form-header h1 {
+  margin: 0;
+  color: var(--auth-text);
+  font-size: 32px;
+}
+
+.auth-form-header p {
+  margin: 10px 0 18px;
+  color: var(--auth-muted);
+}
+
+.auth-card {
+  background: var(--auth-card);
+  border: 1px solid var(--auth-border);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.08);
+}
+
+.auth-alert {
+  border-radius: 10px;
+  padding: 11px 12px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.auth-alert.error {
+  background: var(--auth-danger-bg);
+  color: var(--auth-danger-text);
+}
+
+.auth-alert.success {
+  background: var(--auth-success-bg);
+  color: var(--auth-success-text);
+}
+
+.auth-field {
+  margin-bottom: 14px;
+}
+
+.auth-field label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--auth-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.auth-field-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-inline-link,
+.auth-switch button,
+.auth-resend-row button,
+.auth-checkbox-row button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--auth-brand);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auth-inline-link:hover,
+.auth-switch button:hover,
+.auth-resend-row button:hover,
+.auth-checkbox-row button:hover {
+  color: var(--auth-brand-dark);
+}
+
+.auth-input-wrap {
+  position: relative;
+}
+
+.auth-input-icon {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  transform: translateY(-50%);
+  opacity: 0.75;
+}
+
+.auth-input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 0 42px 0 36px;
+  font-size: 15px;
+  color: var(--auth-text);
+  background: #fff;
+}
+
+.auth-input:focus {
+  border-color: #60a5fa;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.auth-input.error,
+.auth-otp-input.error {
+  border-color: #f87171;
+}
+
+.auth-pw-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.auth-field-error {
+  margin: 7px 2px 0;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.auth-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  color: #334155;
+}
+
+.auth-submit {
+  width: 100%;
+  height: 45px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.auth-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #6b7280;
+  font-size: 13px;
+  margin-top: 18px;
+}
+
+.auth-divider-line {
+  height: 1px;
+  flex: 1;
+  background: #e5e7eb;
+}
+
+.auth-oauth-btn {
+  margin-top: 14px;
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auth-oauth-icon {
+  margin-right: 8px;
+  font-weight: 700;
+}
+
+.auth-switch {
+  margin-top: 16px;
+  text-align: center;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.auth-pw-strength {
+  margin-top: 10px;
+}
+
+.auth-pw-strength-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.auth-pw-strength-seg {
+  height: 6px;
+  border-radius: 99px;
+  background: #e5e7eb;
+}
+
+.filled-weak {
+  background: #ef4444;
+}
+
+.filled-fair {
+  background: #f59e0b;
+}
+
+.filled-good {
+  background: #22c55e;
+}
+
+.filled-strong {
+  background: #16a34a;
+}
+
+.auth-pw-strength-label {
+  font-size: 12px;
+}
+
+.auth-pw-strength-label.weak {
+  color: #dc2626;
+}
+
+.auth-pw-strength-label.fair {
+  color: #d97706;
+}
+
+.auth-pw-strength-label.good,
+.auth-pw-strength-label.strong {
+  color: #15803d;
+}
+
+.auth-otp-inputs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 14px;
+}
+
+.auth-otp-input {
+  height: 46px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.auth-otp-input:focus {
+  border-color: #60a5fa;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.auth-resend-row {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+@media (max-width: 980px) {
+  .auth-root {
+    grid-template-columns: 1fr;
   }
 
-  async function handleSendCode(e) {
-    e.preventDefault()
-    setFormError('')
-    setSuccess('')
-    if (!email.trim()) { setFormError('Email is required.'); return }
-    setSubmitting(true)
-    try {
-      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
-      })
-      const data = await res.json()
-      if (!res.ok) { setFormError(data.error || 'Failed to send reset code.'); return }
-      setSuccess(data.message || 'Reset code sent successfully.')
-      setStep(2)
-    } catch {
-      setFormError('Could not connect to server. Please try again later.')
-    } finally {
-      setSubmitting(false)
-    }
+  .auth-left {
+    padding: 28px 22px;
   }
 
-  async function handleResetPassword(e) {
-    e.preventDefault()
-    setFormError('')
-    setSuccess('')
-    if (!code.trim()) { setFormError('Reset code is required.'); return }
-    if (newPassword.length < 8) { setFormError('New password must be at least 8 characters.'); return }
-    if (pwStrength.score < 4) { setFormError('New password must be strong (8+ chars with uppercase, number, and symbol).'); return }
-    if (newPassword !== confirmPassword) { setFormError('Passwords do not match.'); return }
-    setSubmitting(true)
-    try {
-      const res = await fetch(`${API_BASE}/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim(),
-          code: parseInt(code, 10),
-          newPassword,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) { setFormError(data.error || 'Failed to reset password.'); return }
-      setSuccess(data.message || 'Password reset successful.')
-      setTimeout(() => navigate('/login'), 1400)
-    } catch {
-      setFormError('Could not connect to server. Please try again later.')
-    } finally {
-      setSubmitting(false)
-    }
+  .auth-right {
+    padding: 20px 14px 30px;
   }
-
-  return (
-    <div className="auth-root">
-      <LeftPanel />
-      <div className="auth-right">
-        <div className="auth-form-wrap">
-          <div className="auth-form-header">
-            <h1>Forgot Password</h1>
-            <p>{step === 1 ? 'Request a reset code.' : `Reset password for ${email}`}</p>
-          </div>
-          <div className="auth-card">
-            {formError && <div className="auth-alert error">⚠ {formError}</div>}
-            {success && <div className="auth-alert success">✓ {success}</div>}
-
-            {step === 1 ? (
-              <form onSubmit={handleSendCode} noValidate>
-                <div className="auth-field">
-                  <label htmlFor="fp-email">Email address</label>
-                  <div className="auth-input-wrap">
-                    <span className="auth-input-icon">✉</span>
-                    <input
-                      id="fp-email"
-                      className="auth-input"
-                      type="email"
-                      name="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      autoComplete="email"
-                    />
-                  </div>
-                </div>
-                <button type="submit" className="auth-submit" disabled={submitting}>
-                  {submitting ? 'Sending code…' : 'Send Reset Code'}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleResetPassword} noValidate>
-                <div className="auth-field">
-                  <label htmlFor="fp-code">Reset code</label>
-                  <div className="auth-input-wrap">
-                    <span className="auth-input-icon">🔢</span>
-                    <input
-                      id="fp-code"
-                      className="auth-input"
-                      type="text"
-                      name="code"
-                      placeholder="6-digit code"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      inputMode="numeric"
-                    />
-                  </div>
-                </div>
-
-                <div className="auth-field">
-                  <label htmlFor="fp-new-password">New password</label>
-                  <div className="auth-input-wrap">
-                    <span className="auth-input-icon">🔒</span>
-                    <input
-                      id="fp-new-password"
-                      className="auth-input"
-                      type="password"
-                      name="newPassword"
-                      placeholder="Min. 8 characters"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      autoComplete="new-password"
-                    />
-                  </div>
-                  {newPassword && (
-                    <div className="auth-pw-strength">
-                      <div className="auth-pw-strength-bar">
-                        {[0, 1, 2, 3].map((i) => (
-                          <div key={i} className={strengthSegClass(i)} />
-                        ))}
-                      </div>
-                      <span className={`auth-pw-strength-label ${pwStrength.cls}`}>
-                        {pwStrength.label} password
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="auth-field">
-                  <label htmlFor="fp-confirm-password">Confirm new password</label>
-                  <div className="auth-input-wrap">
-                    <span className="auth-input-icon">🔒</span>
-                    <input
-                      id="fp-confirm-password"
-                      className="auth-input"
-                      type="password"
-                      name="confirmPassword"
-                      placeholder="Re-enter new password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      autoComplete="new-password"
-                    />
-                  </div>
-                </div>
-
-                <button type="submit" className="auth-submit" disabled={submitting || !isPasswordStrong}>
-                  {submitting ? 'Resetting…' : 'Reset Password'}
-                </button>
-              </form>
-            )}
-          </div>
-
-          <p className="auth-switch">
-            Remembered your password?{' '}
-            <button type="button" onClick={() => navigate('/login')}>
-              Sign in
-            </button>
-          </p>
-        </div>
-      </div>
-    </div>
-  )
 }

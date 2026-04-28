@@ -489,12 +489,17 @@ export default function Dashboard() {
 
     incomes.forEach((income) => {
       const date = toDate(income.date)
-      if (!date) return
+      if (!date) {
+        console.warn('Invalid income date:', income.date)
+        return
+      }
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
       if (Object.prototype.hasOwnProperty.call(monthTotals, key)) {
         monthTotals[key] += Number(income.amount || 0)
       }
     })
+
+    console.log('Income trend data:', { months: months.map(m => m.label), totals: months.map((m) => monthTotals[m.key]) })
 
     return {
       labels: months.map((m) => m.label),

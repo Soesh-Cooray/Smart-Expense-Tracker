@@ -1,26 +1,36 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 const API = 'http://localhost:8080/api/budget'
 const USER_ID = 1
 
-export default function App() {
+export default function Budget({ onOpenSidebar }) {
   const [budgets, setBudgets] = useState([])
   const [form, setForm] = useState({ category: '', budgetAmount: '', monthYear: '' })
   const [editingId, setEditingId] = useState(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  useEffect(() => { fetchBudgets() }, [])
-
-  const fetchBudgets = async () => {
+  const fetchBudgets = useCallback(async () => {
     try {
       const res = await fetch(`${API}/user/${USER_ID}`)
       const data = await res.json()
       setBudgets(data)
-    } catch (err) {
-      console.error('Failed to fetch budgets:', err)
+    } catch (e) {
+      console.error('Failed to fetch budgets:', e)
     }
-  }
+  }, [])
+
+  useEffect(() => { 
+    (async () => {
+      try {
+        const res = await fetch(`${API}/user/${USER_ID}`)
+        const data = await res.json()
+        setBudgets(data)
+      } catch (e) {
+        console.error('Failed to fetch budgets:', e)
+      }
+    })()
+  }, [])
 
   const resetForm = () => {
     setForm({ category: '', budgetAmount: '', monthYear: '' })
@@ -74,8 +84,9 @@ export default function App() {
       setSuccess(editingId ? 'Budget updated!' : 'Budget created!')
       fetchBudgets()
       resetForm()
-    } catch (err) {
+    } catch (e) {
       setError('Something went wrong. Please try again.')
+      console.error(e)
     }
   }
 
@@ -96,8 +107,9 @@ export default function App() {
       setSuccess('Budget deleted!')
       fetchBudgets()
       if (editingId === budgetId) resetForm()
-    } catch (err) {
+    } catch (e) {
       setError('Failed to delete budget.')
+      console.error(e)
     }
   }
 
@@ -128,8 +140,11 @@ export default function App() {
 
   return (
     <div style={pageStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h1 style={{ margin: 0, fontSize: 28, flex: 1 }}>Budget Management</h1>
+        <button onClick={onOpenSidebar} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}>☰</button>
+      </div>
       <div style={cardStyle}>
-        <h1 style={{ margin: 0, marginBottom: 12, fontSize: 28 }}>Budget Management</h1>
         <p style={{ marginTop: 0, marginBottom: 28, color: 'rgba(15,23,42,0.75)' }}>
           Track your budgets by category and keep a close eye on what's left.
         </p>
