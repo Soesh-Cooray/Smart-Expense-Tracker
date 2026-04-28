@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import '../../Dashboard.css'
+import '../income/IncomePage.css'
 
 const API = 'http://localhost:8080/api/budget'
 const USER_ID = 1
@@ -14,23 +16,18 @@ export default function Budget({ onOpenSidebar }) {
     try {
       const res = await fetch(`${API}/user/${USER_ID}`)
       const data = await res.json()
-      setBudgets(data)
+      setBudgets(Array.isArray(data) ? data : [])
     } catch (e) {
       console.error('Failed to fetch budgets:', e)
     }
   }, [])
 
-  useEffect(() => { 
-    (async () => {
-      try {
-        const res = await fetch(`${API}/user/${USER_ID}`)
-        const data = await res.json()
-        setBudgets(data)
-      } catch (e) {
-        console.error('Failed to fetch budgets:', e)
-      }
-    })()
-  }, [])
+  useEffect(() => {
+    const id = setTimeout(() => {
+      fetchBudgets()
+    }, 0)
+    return () => clearTimeout(id)
+  }, [fetchBudgets])
 
   const resetForm = () => {
     setForm({ category: '', budgetAmount: '', monthYear: '' })
@@ -113,142 +110,101 @@ export default function Budget({ onOpenSidebar }) {
     }
   }
 
-  const pageStyle = {
-    minHeight: '100vh', padding: '40px 16px',
-    background: 'linear-gradient(135deg, #f3f9ff 0%, #e8f2ff 100%)',
-    fontFamily: 'system-ui, sans-serif', color: '#0b1a2d',
-  }
-  const cardStyle = {
-    maxWidth: 900, margin: '0 auto', padding: 24,
-    background: '#ffffff', borderRadius: 18,
-    boxShadow: '0 16px 40px rgba(0,0,0,0.08)',
-  }
-  const inputStyle = {
-    width: '100%', padding: '12px 14px',
-    border: '1px solid rgba(15,23,42,0.15)',
-    borderRadius: 10, fontSize: 16, outline: 'none', boxSizing: 'border-box',
-  }
-  const buttonStyle = {
-    padding: '12px 18px', borderRadius: 10, border: 'none',
-    cursor: 'pointer', fontWeight: 600, fontSize: 15,
-  }
-  const tableHeaderStyle = {
-    background: '#1d4ed8', color: 'white',
-    textAlign: 'left', padding: '12px 14px',
-    borderBottom: '2px solid rgba(255,255,255,0.3)',
-  }
-
   return (
-    <div style={pageStyle}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ margin: 0, fontSize: 28, flex: 1 }}>Budget Management</h1>
-        <button onClick={onOpenSidebar} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}>☰</button>
-      </div>
-      <div style={cardStyle}>
-        <p style={{ marginTop: 0, marginBottom: 28, color: 'rgba(15,23,42,0.75)' }}>
-          Track your budgets by category and keep a close eye on what's left.
-        </p>
-
-        {error && (
-          <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '12px 16px', borderRadius: 10, marginBottom: 16, fontWeight: 500 }}>
-            ⚠ {error}
+    <>
+      <header className="db-header">
+        <div className="db-header-left">
+          <button className="db-hamburger" type="button" onClick={onOpenSidebar}>☰</button>
+          <div>
+            <h1 className="db-title">Budget Management</h1>
+            <p className="db-subtitle">Manage monthly budgets by category</p>
           </div>
-        )}
-        {success && (
-          <div style={{ background: '#d1fae5', color: '#047857', padding: '12px 16px', borderRadius: 10, marginBottom: 16, fontWeight: 500 }}>
-            ✓ {success}
-          </div>
-        )}
+        </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 14, marginBottom: 28 }}>
+        <div className="db-header-right">
+          <button className="db-icon-btn" type="button" title="Notifications">🔔</button>
+          <button className="db-add-btn" type="button" onClick={() => { setEditingId(null); setForm({ category: '', budgetAmount: '', monthYear: '' }); }}>+ Add Budget</button>
+        </div>
+      </header>
+
+      {error && <div className="inc-error-banner">⚠ {error}</div>}
+      {success && <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 12, background: '#d1fae5', color: '#047857', fontWeight: 600 }}>{success}</div>}
+
+      <section className="db-card">
+        <div className="db-card-header">
+          <h3>Create / Edit Budget</h3>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 14, marginBottom: 8 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-            <label style={{ fontSize: 14, fontWeight: 600 }}>
-              Category
-              <input type="text" value={form.category} onChange={handleChange('category')}
-                placeholder="e.g. Groceries" style={{ ...inputStyle, marginTop: 6 }} />
+            <label className="inc-form-field">
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Category</span>
+              <input type="text" value={form.category} onChange={handleChange('category')} placeholder="e.g. Groceries" />
             </label>
-            <label style={{ fontSize: 14, fontWeight: 600 }}>
-              Budget Amount
-              <input type="number" min="0.01" step="0.01" value={form.budgetAmount}
-                onChange={handleChange('budgetAmount')} placeholder="0.00"
-                style={{ ...inputStyle, marginTop: 6 }} />
+
+            <label className="inc-form-field">
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Budget Amount</span>
+              <input type="number" min="0.01" step="0.01" value={form.budgetAmount} onChange={handleChange('budgetAmount')} placeholder="0.00" />
             </label>
-            <label style={{ fontSize: 14, fontWeight: 600 }}>
-              Month
-              <input type="month" value={form.monthYear}
-                onChange={handleChange('monthYear')}
-                style={{ ...inputStyle, marginTop: 6 }} />
+
+            <label className="inc-form-field">
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Month</span>
+              <input type="month" value={form.monthYear} onChange={handleChange('monthYear')} />
             </label>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
             {editingId && (
-              <button type="button" onClick={resetForm}
-                style={{ ...buttonStyle, background: '#e5e7eb', color: '#0b1a2d' }}>
-                Cancel
-              </button>
+              <button type="button" className="inc-btn-ghost" onClick={resetForm}>Cancel</button>
             )}
-            <button type="submit" style={{
-              ...buttonStyle,
-              background: editingId ? '#f59e0b' : '#10b981',
-              color: 'white', width: 180,
-            }}>
-              {editingId ? 'Save Changes' : 'Add Budget'}
-            </button>
+            <button type="submit" className="inc-btn-primary">{editingId ? 'Save Changes' : 'Add Budget'}</button>
           </div>
         </form>
+      </section>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={tableHeaderStyle}>Category</th>
-                <th style={tableHeaderStyle}>Month</th>
-                <th style={tableHeaderStyle}>Budget</th>
-                <th style={tableHeaderStyle}>Spent</th>
-                <th style={tableHeaderStyle}>Remaining</th>
-                <th style={tableHeaderStyle}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {budgets.length === 0 ? (
+      <section className="db-card">
+        <div className="db-card-header">
+          <h3>Budgets</h3>
+          <span className="db-card-tag">Overview</span>
+        </div>
+
+        <div className="inc-table-wrap">
+          {budgets.length === 0 ? (
+            <p className="inc-empty-row">No budgets yet. Use the form above to create one.</p>
+          ) : (
+            <table className="inc-table">
+              <thead>
                 <tr>
-                  <td colSpan={6} style={{ padding: 18, textAlign: 'center', color: 'rgba(15,23,42,0.7)' }}>
-                    No budgets yet. Use the form above to create one.
-                  </td>
+                  <th>Category</th>
+                  <th>Month</th>
+                  <th>Budget</th>
+                  <th>Spent</th>
+                  <th>Remaining</th>
+                  <th>Actions</th>
                 </tr>
-              ) : (
-                budgets.map((entry, index) => {
+              </thead>
+              <tbody>
+                {budgets.map((entry) => {
                   const remaining = (entry.budgetAmount || 0) - (entry.spentAmount || 0)
                   return (
-                    <tr key={entry.budgetId} style={{ background: index % 2 === 0 ? 'rgba(255,255,255,0.85)' : 'rgba(243,247,255,0.95)' }}>
-                      <td style={{ padding: 12, borderBottom: '1px solid rgba(15,23,42,0.08)' }}>{entry.category}</td>
-                      <td style={{ padding: 12, borderBottom: '1px solid rgba(15,23,42,0.08)' }}>{entry.monthYear}</td>
-                      <td style={{ padding: 12, borderBottom: '1px solid rgba(15,23,42,0.08)' }}>${entry.budgetAmount?.toFixed(2)}</td>
-                      <td style={{ padding: 12, borderBottom: '1px solid rgba(15,23,42,0.08)' }}>${(entry.spentAmount || 0).toFixed(2)}</td>
-                      <td style={{ padding: 12, borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
-                        <span style={{ fontFamily: 'monospace', color: remaining < 0 ? '#b91c1c' : '#047857' }}>
-                          ${remaining.toFixed(2)}
-                        </span>
-                      </td>
-                      <td style={{ padding: 12, borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
-                        <button type="button" onClick={() => handleEdit(entry)}
-                          style={{ ...buttonStyle, background: '#fbbf24', color: '#0b1a2d', marginRight: 10 }}>
-                          Edit
-                        </button>
-                        <button type="button" onClick={() => handleDelete(entry.budgetId)}
-                          style={{ ...buttonStyle, background: '#ef4444', color: 'white' }}>
-                          Delete
-                        </button>
+                    <tr key={entry.budgetId}>
+                      <td>{entry.category}</td>
+                      <td>{entry.monthYear}</td>
+                      <td className="inc-amount">{Number(entry.budgetAmount || 0).toFixed(2)}</td>
+                      <td>{Number(entry.spentAmount || 0).toFixed(2)}</td>
+                      <td><span style={{ fontFamily: 'monospace', color: remaining < 0 ? '#b91c1c' : '#047857' }}>{remaining.toFixed(2)}</span></td>
+                      <td className="inc-actions">
+                        <button type="button" className="inc-btn-edit" onClick={() => handleEdit(entry)}>Edit</button>
+                        <button type="button" className="inc-btn-delete" onClick={() => handleDelete(entry.budgetId)}>Delete</button>
                       </td>
                     </tr>
                   )
-                })
-              )}
-            </tbody>
-          </table>
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
-      </div>
-    </div>
+      </section>
+    </>
   )
 }
