@@ -45,6 +45,12 @@ public class ExpenseController {
         return ResponseEntity.ok(expenses);
     }
 
+    @GetMapping("/user/{userId}/categories")
+    public ResponseEntity<List<String>> getCategoriesByUserId(@PathVariable Long userId) {
+        List<String> categories = expenseService.getDistinctCategoriesByUserId(userId);
+        return ResponseEntity.ok(categories);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Expense> getExpenseById(@PathVariable Long id) {
         Expense expense = expenseService.getExpenseById(id);

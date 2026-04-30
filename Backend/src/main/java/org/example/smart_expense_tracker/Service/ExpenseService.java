@@ -10,9 +10,11 @@ import org.springframework.stereotype.Service;
 public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
+    private final BudgetService budgetService;
 
-    public ExpenseService(ExpenseRepository expenseRepository) {
+    public ExpenseService(ExpenseRepository expenseRepository, BudgetService budgetService) {
         this.expenseRepository = expenseRepository;
+        this.budgetService = budgetService;
     }
 
     public List<Expense> getAllExpenses() {
@@ -21,6 +23,10 @@ public class ExpenseService {
 
     public List<Expense> getExpensesByUserId(Long userId) {
         return expenseRepository.findByUserId(userId);
+    }
+
+    public List<String> getDistinctCategoriesByUserId(Long userId) {
+        return expenseRepository.findDistinctCategoriesByUserId(userId);
     }
 
     public Expense getExpenseById(Long id) {
@@ -32,12 +38,16 @@ public class ExpenseService {
         if (expense.getUserId() == null) {
             throw new RuntimeException("User ID is required");
         }
-        return expenseRepository.save(expense);
+        Expense saved = expenseRepository.save(expense);
+        budgetService.syncBudgetsForUserAndCategory(saved.getUserId(), saved.getCategory());
+        return saved;
     }
 
     public Expense updateExpense(Long id, Expense expenseDetails) {
         Expense expense = expenseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Expense not found"));
+
+        String oldCategory = expense.getCategory();
 
         expense.setDescription(expenseDetails.getDescription());
         expense.setCategory(expenseDetails.getCategory());
@@ -46,13 +56,15 @@ public class ExpenseService {
         expense.setDate(expenseDetails.getDate());
         expense.setNotes(expenseDetails.getNotes());
 
-        return expenseRepository.save(expense);
+        Expense saved = expenseRepository.save(expense);
+        budgetService.syncBudgetsAfterExpenseUpdate(saved.getUserId(), oldCategory, saved.getCategory());
+        return saved;
     }
 
     public void deleteExpense(Long id) {
-        if (!expenseRepository.existsById(id)) {
-            throw new RuntimeException("Expense not found");
-        }
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Expense not found"));
         expenseRepository.deleteById(id);
+        budgetService.syncBudgetsForUserAndCategory(expense.getUserId(), expense.getCategory());
     }
 }

@@ -1,11 +1,18 @@
 package org.example.smart_expense_tracker.Service;
 
 import org.example.smart_expense_tracker.Model.Budget;
+import org.example.smart_expense_tracker.Model.BudgetCycle;
 import org.example.smart_expense_tracker.Repository.BudgetRepository;
+import org.example.smart_expense_tracker.Repository.ExpenseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class BudgetService {
@@ -13,52 +20,69 @@ public class BudgetService {
     @Autowired
     private BudgetRepository budgetRepository;
 
-    public Budget createBudget(Budget budget) {
-        // Check month is not in the past
-        YearMonth current = YearMonth.now();
-        YearMonth budgetMonth = YearMonth.parse(budget.getMonthYear());
-        if (budgetMonth.isBefore(current)) {
-            throw new IllegalArgumentException("Month cannot be in the past");
-        }
+    @Autowired
+    private ExpenseRepository expenseRepository;
 
-        // Check no duplicate category for same month
-        Budget existing = budgetRepository.findByUserIdAndCategoryAndMonthYear(
-                budget.getUserId(), budget.getCategory(), budget.getMonthYear()
+    public Budget createBudget(Budget budget) {
+        normalizeAndValidateCycleFields(budget, true);
+
+        Budget existing = budgetRepository.findByUserIdAndCategoryIgnoreCaseAndCycleAndStartDay(
+                budget.getUserId(), budget.getCategory(), budget.getCycle(), budget.getStartDay()
         );
         if (existing != null) {
-            throw new IllegalArgumentException("Budget for this category and month already exists");
+            throw new IllegalArgumentException("A budget with the same category, cycle, and start day already exists");
         }
 
-        // Check spent does not exceed budget
-        if (budget.getSpentAmount() != null && budget.getSpentAmount() > budget.getBudgetAmount()) {
-            throw new IllegalArgumentException("Spent amount cannot exceed budget amount");
-        }
-
-        budget.setSpentAmount(budget.getSpentAmount() == null ? 0.0 : budget.getSpentAmount());
-        budget.setRemainingAmount(budget.getBudgetAmount() - budget.getSpentAmount());
+        refreshCycleAndAmounts(budget);
         return budgetRepository.save(budget);
     }
 
     public List<Budget> getUserBudgets(Long userId) {
-        return budgetRepository.findByUserId(userId);
+        List<Budget> budgets = budgetRepository.findByUserId(userId);
+        List<Budget> updatedBudgets = new ArrayList<>();
+        for (Budget budget : budgets) {
+            refreshCycleAndAmounts(budget);
+            updatedBudgets.add(budgetRepository.save(budget));
+        }
+        return updatedBudgets;
     }
 
     public List<Budget> getUserBudgetsByMonth(Long userId, String monthYear) {
-        return budgetRepository.findByUserIdAndMonthYear(userId, monthYear);
+        List<Budget> budgets = getUserBudgets(userId);
+        return budgets.stream()
+                .filter(b -> b.getCurrentCycleStart() != null)
+                .filter(b -> {
+                    YearMonth ym = YearMonth.from(b.getCurrentCycleStart());
+                    return ym.toString().equals(monthYear);
+                })
+                .toList();
     }
 
     public Budget updateBudget(Long budgetId, Budget updatedBudget) {
-        Budget existing = budgetRepository.findById(budgetId).orElseThrow();
+        Budget existing = budgetRepository.findById(budgetId)
+                .orElseThrow(() -> new IllegalArgumentException("Budget not found"));
 
-        // Check spent does not exceed new budget amount
-        if (existing.getSpentAmount() != null && existing.getSpentAmount() > updatedBudget.getBudgetAmount()) {
-            throw new IllegalArgumentException("Budget amount cannot be less than already spent amount");
+        normalizeAndValidateCycleFields(updatedBudget, false);
+
+        Budget duplicate = budgetRepository.findByUserIdAndCategoryIgnoreCaseAndCycleAndStartDay(
+                existing.getUserId(), updatedBudget.getCategory(), updatedBudget.getCycle(), updatedBudget.getStartDay()
+        );
+        if (duplicate != null && !Objects.equals(duplicate.getBudgetId(), budgetId)) {
+            throw new IllegalArgumentException("Another budget with same category, cycle, and start day already exists");
+        }
+
+        if (updatedBudget.getBudgetAmount() == null || updatedBudget.getBudgetAmount() <= 0) {
+            throw new IllegalArgumentException("Budget amount must be greater than 0");
         }
 
         existing.setBudgetAmount(updatedBudget.getBudgetAmount());
         existing.setCategory(updatedBudget.getCategory());
+        existing.setCycle(updatedBudget.getCycle());
+        existing.setStartDay(updatedBudget.getStartDay());
+        existing.setStartDate(updatedBudget.getStartDate());
         existing.setMonthYear(updatedBudget.getMonthYear());
-        existing.setRemainingAmount(updatedBudget.getBudgetAmount() - existing.getSpentAmount());
+
+        refreshCycleAndAmounts(existing);
         return budgetRepository.save(existing);
     }
 
@@ -67,16 +91,119 @@ public class BudgetService {
     }
 
     public Budget updateSpentAmount(Long userId, String category, Double amount) {
-        Budget budget = budgetRepository.findByUserIdAndCategory(userId, category);
-        if (budget != null) {
-            double newSpent = budget.getSpentAmount() + amount;
-            if (newSpent > budget.getBudgetAmount()) {
-                throw new IllegalArgumentException("Spent amount cannot exceed budget amount");
-            }
-            budget.setSpentAmount(newSpent);
-            budget.setRemainingAmount(budget.getBudgetAmount() - newSpent);
-            return budgetRepository.save(budget);
+        if (amount == null || amount < 0) {
+            throw new IllegalArgumentException("Amount must be a non-negative value");
         }
-        return null;
+
+        List<Budget> budgets = budgetRepository.findByUserIdAndCategoryIgnoreCase(userId, category);
+        if (budgets.isEmpty()) {
+            return null;
+        }
+
+        Budget lastSaved = null;
+        for (Budget budget : budgets) {
+            refreshCycleAndAmounts(budget);
+            lastSaved = budgetRepository.save(budget);
+        }
+        return lastSaved;
+    }
+
+    public void syncBudgetsForUserAndCategory(Long userId, String category) {
+        if (category == null || category.isBlank()) {
+            return;
+        }
+
+        List<Budget> budgets = budgetRepository.findByUserIdAndCategoryIgnoreCase(userId, category);
+        for (Budget budget : budgets) {
+            refreshCycleAndAmounts(budget);
+            budgetRepository.save(budget);
+        }
+    }
+
+    public void syncBudgetsAfterExpenseUpdate(Long userId, String oldCategory, String newCategory) {
+        if (oldCategory != null && !oldCategory.isBlank()) {
+            syncBudgetsForUserAndCategory(userId, oldCategory);
+        }
+        if (newCategory != null && !newCategory.isBlank() && !newCategory.equalsIgnoreCase(oldCategory)) {
+            syncBudgetsForUserAndCategory(userId, newCategory);
+        }
+    }
+
+    private void normalizeAndValidateCycleFields(Budget budget, boolean validateLegacyMonth) {
+        if (budget.getCycle() == null) {
+            throw new IllegalArgumentException("Cycle is required");
+        }
+        if (budget.getStartDay() == null || budget.getStartDay() < 1 || budget.getStartDay() > 31) {
+            throw new IllegalArgumentException("Start day must be between 1 and 31");
+        }
+        if (budget.getBudgetAmount() == null || budget.getBudgetAmount() <= 0) {
+            throw new IllegalArgumentException("Budget amount must be greater than 0");
+        }
+
+        LocalDate baseDate = budget.getStartDate() == null
+                ? deriveStartDateFromDay(budget.getStartDay())
+                : budget.getStartDate();
+        budget.setStartDate(alignStartDate(baseDate, budget.getStartDay()));
+
+        if (validateLegacyMonth && budget.getMonthYear() != null && !budget.getMonthYear().isBlank()) {
+            try {
+                YearMonth current = YearMonth.now();
+                YearMonth budgetMonth = YearMonth.parse(budget.getMonthYear());
+                if (budgetMonth.isBefore(current)) {
+                    throw new IllegalArgumentException("Month cannot be in the past");
+                }
+            } catch (DateTimeParseException ignored) {
+                // Ignore invalid legacy month values and rely on cycle fields.
+            }
+        }
+    }
+
+    private void refreshCycleAndAmounts(Budget budget) {
+        LocalDate today = LocalDate.now();
+        LocalDate currentStart = calculateCurrentCycleStart(budget.getStartDate(), budget.getCycle(), budget.getStartDay(), today);
+        LocalDate nextStart = calculateNextCycleStart(currentStart, budget.getCycle(), budget.getStartDay());
+        LocalDate currentEnd = nextStart.minusDays(1);
+
+        budget.setCurrentCycleStart(currentStart);
+        budget.setCurrentCycleEnd(currentEnd);
+
+        Double spent = expenseRepository.sumAmountByUserCategoryAndDateRange(
+                budget.getUserId(),
+                budget.getCategory(),
+                currentStart,
+                currentEnd
+        );
+        double safeSpent = spent == null ? 0.0 : spent;
+        budget.setSpentAmount(safeSpent);
+        budget.setRemainingAmount(budget.getBudgetAmount() - safeSpent);
+    }
+
+    private LocalDate calculateCurrentCycleStart(LocalDate initialStart, BudgetCycle cycle, Integer startDay, LocalDate today) {
+        LocalDate start = initialStart;
+        while (!calculateNextCycleStart(start, cycle, startDay).isAfter(today)) {
+            start = calculateNextCycleStart(start, cycle, startDay);
+        }
+        return start;
+    }
+
+    private LocalDate calculateNextCycleStart(LocalDate start, BudgetCycle cycle, Integer startDay) {
+        if (cycle == BudgetCycle.WEEKLY) {
+            return start.plusWeeks(1);
+        }
+
+        LocalDate nextMonth = start.plusMonths(1);
+        int expectedDay = Math.min(startDay, YearMonth.from(nextMonth).lengthOfMonth());
+        return LocalDate.of(nextMonth.getYear(), nextMonth.getMonth(), expectedDay);
+    }
+
+    private LocalDate alignStartDate(LocalDate baseDate, Integer startDay) {
+        int safeDay = Math.min(startDay, YearMonth.from(baseDate).lengthOfMonth());
+        return LocalDate.of(baseDate.getYear(), baseDate.getMonth(), safeDay);
+    }
+
+    private LocalDate deriveStartDateFromDay(Integer startDay) {
+        LocalDate now = LocalDate.now();
+        int safeDay = Math.min(startDay, now.lengthOfMonth());
+        return LocalDate.of(now.getYear(), now.getMonth(), safeDay);
     }
 }
