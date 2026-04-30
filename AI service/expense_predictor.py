@@ -2,18 +2,30 @@
 ╔══════════════════════════════════════════════════════════════╗
 ║         Smart Expense Tracker — ML Prediction Service        ║
 ║                     FastAPI Microservice                     ║
+║                    v3 — Full Scale Fix                       ║
 ╚══════════════════════════════════════════════════════════════╝
 
-FIX v2 — Personal Scale Correction
-────────────────────────────────────
-The model was trained on POPULATION-level aggregated monthly totals
-(sum of all users per month), so its raw output is in the 50k–80k range.
-Individual users spend in the 2k–10k range.
+FIX v3 — Full Input + Output Scale Correction
+──────────────────────────────────────────────
+Root cause: The model was trained on POPULATION-level aggregated monthly
+totals (sum of ALL users per month = 100k–2M range). Individual users
+spend far less (2k–10k). This causes two problems:
 
-The fix uses a "relative prediction" approach:
-  1. Ask the model what % change it expects vs the population baseline
-  2. Apply that same % change to the user's own personal baseline
-  → Preserves seasonal patterns & trend direction, anchored to user's scale
+  Problem 1 — Input features out of range:
+    lag_1m, roll_mean etc. are 2k–10k for the user.
+    During training these were always 100k–2M.
+    Random Forest cannot extrapolate → outputs garbage (~150–200).
+
+  Problem 2 — Output in wrong scale:
+    Even fixing only the output leaves the input broken,
+    so the raw prediction is already meaningless.
+
+  Fix — Scale in BOTH directions:
+    1. Multiply all amount-based input features by (population_mean / user_mean)
+       → Model now sees inputs in its expected training range
+    2. Run model → get a sensible population-scale prediction
+    3. Divide prediction by the same factor
+       → Result is back in the user's personal spending range
 
 Architecture:
     React Frontend
@@ -67,9 +79,9 @@ logger = logging.getLogger(__name__)
 #  CONFIGURATION
 # ══════════════════════════════════════════════════════════════════════════════
 
-BASE_DIR   = Path(__file__).parent
-MODEL_PATH = BASE_DIR / "random_forest_tuned_best.pkl"
-CONFIG_PATH= BASE_DIR / "tuned_model_config.json"
+BASE_DIR    = Path(__file__).parent
+MODEL_PATH  = BASE_DIR / "random_forest_tuned_best.pkl"
+CONFIG_PATH = BASE_DIR / "tuned_model_config.json"
 
 SUPPORTED_CATEGORIES = [
     "food", "travel", "health", "utilities", "rent",
@@ -78,21 +90,37 @@ SUPPORTED_CATEGORIES = [
 
 MIN_HISTORY_MONTHS = 12
 
-# ── Population-level monthly means from training data ─────────────────────────
-# Extracted from:
-#   monthly.groupby('refined_category')['total_amount'].mean()
-# These are the actual mean monthly totals the model was trained on (all users aggregated).
+# ── Actual population-level monthly means from training data ──────────────────
+# Source: monthly.groupby('refined_category')['total_amount'].mean()
+# These are the exact values the model learned to predict at.
 POPULATION_CATEGORY_MEANS = {
     "food"         : 1754168.00,
-    "travel"       :  1176381.81,
-    "health"       :  1291446.19,
-    "utilities"    :   929630.88,
-    "rent"         :  1109215.40,
-    "entertainment":   570588.42,
-    "education"    :   469532.77,
-    "misc"         :   226424.71,
-    "others"       :   127744.54,
+    "travel"       : 1176381.81,
+    "health"       : 1291446.19,
+    "utilities"    :  929630.88,
+    "rent"         : 1109215.40,
+    "entertainment":  570588.42,
+    "education"    :  469532.77,
+    "misc"         :  226424.71,
+    "others"       :  127744.54,
 }
+
+# Feature column prefixes that contain amount values and must be scaled
+AMOUNT_FEATURE_PREFIXES = (
+    "lag_",
+    "roll_mean_",
+    "roll_std_",
+    "roll_max_",
+    "roll_min_",
+    "cat_global_mean",
+    "cat_global_median",
+    "cat_global_std",
+    "cat_global_max",
+    "cat_global_min",
+    "cat_same_month_hist_avg",
+    "mom_change",
+    "yoy_lag_",
+)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -103,88 +131,30 @@ def load_model_and_config():
     if not MODEL_PATH.exists():
         raise FileNotFoundError(
             f"Model file not found: {MODEL_PATH}\n"
-            "Place 'random_forest_tuned_best.pkl' in the same directory."
+            "Place 'random_forest_tuned_best.pkl' in the same directory as this file."
         )
     if not CONFIG_PATH.exists():
         raise FileNotFoundError(
             f"Config file not found: {CONFIG_PATH}\n"
-            "Place 'tuned_model_config.json' in the same directory."
+            "Place 'tuned_model_config.json' in the same directory as this file."
         )
-    model = joblib.load(MODEL_PATH)
+    m = joblib.load(MODEL_PATH)
     with open(CONFIG_PATH) as f:
-        config = json.load(f)
-    logger.info("✅ Model loaded: %s", MODEL_PATH.name)
-    logger.info("   Features     : %d", len(config["feature_cols"]))
-    logger.info("   Log transform: %s", config["use_log_transform"])
-    logger.info("   Test MAE     : %s", config["test_mae"])
-    return model, config
+        c = json.load(f)
+    logger.info(
+        "✅ Model loaded  |  features=%d  |  log_transform=%s  |  test_mae=%s",
+        len(c["feature_cols"]), c["use_log_transform"], c["test_mae"]
+    )
+    return m, c
 
-model, cfg = load_model_and_config()
-
+model, cfg   = load_model_and_config()
 FEATURE_COLS    = cfg["feature_cols"]
 USE_LOG         = cfg["use_log_transform"]
-CATEGORY_LABELS = {
-    cat: i for i, cat in enumerate(sorted(SUPPORTED_CATEGORIES))
-}
+CATEGORY_LABELS = {cat: i for i, cat in enumerate(sorted(SUPPORTED_CATEGORIES))}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  PERSONAL SCALE CORRECTION
-# ══════════════════════════════════════════════════════════════════════════════
-
-def apply_personal_scale(
-    raw_model_prediction: float,
-    user_amounts: np.ndarray,
-    category: str,
-) -> float:
-    """
-    Correct the model's population-scale prediction down to the user's
-    personal spending scale.
-
-    Strategy — Relative Prediction:
-    ─────────────────────────────────
-    1. Compute what % change the model predicts vs the population baseline
-       pct_change = (model_prediction - population_mean) / population_mean
-
-    2. Apply that same % change to the user's own personal baseline
-       personal_prediction = user_mean * (1 + pct_change)
-
-    3. Soft-clamp: don't let the result go below 50% or above 200% of
-       the user's own observed range — protects against extreme outliers.
-
-    This preserves the model's learned seasonal patterns and trend direction
-    while keeping the output anchored to the user's actual spending level.
-    """
-    population_mean = POPULATION_CATEGORY_MEANS.get(category, 50000.0)
-    user_mean       = float(np.mean(user_amounts))
-
-    # Step 1 — what % change does the model expect?
-    pct_change = (raw_model_prediction - population_mean) / (population_mean + 1e-8)
-    logger.debug("  population_mean=%.0f  raw_pred=%.0f  pct_change=%.3f",
-                 population_mean, raw_model_prediction, pct_change)
-
-    # Step 2 — apply that % change to the user's own mean
-    personal_prediction = user_mean * (1.0 + pct_change)
-
-    # Step 3 — soft-clamp to a reasonable range around user's history
-    user_min   = float(np.min(user_amounts))
-    user_max   = float(np.max(user_amounts))
-    lower_bound = user_min * 0.5   # at most 50% below their lowest month
-    upper_bound = user_max * 2.0   # at most 2× their highest month
-
-    clamped = float(np.clip(personal_prediction, lower_bound, upper_bound))
-
-    logger.info(
-        "  Scale correction: raw=%.0f → personal=%.0f → clamped=%.0f  "
-        "(user_mean=%.0f  pct_change=%+.1f%%)",
-        raw_model_prediction, personal_prediction, clamped,
-        user_mean, pct_change * 100,
-    )
-    return clamped
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  FEATURE ENGINEERING  (mirrors the training notebook exactly)
+#  FEATURE ENGINEERING  (mirrors training notebook exactly)
 # ══════════════════════════════════════════════════════════════════════════════
 
 def build_features(
@@ -195,18 +165,21 @@ def build_features(
 ) -> pd.DataFrame:
     """
     Build the full feature vector for one prediction row.
+    Raw user amounts are passed here — scaling is handled separately
+    in predict_amount() before the model sees them.
 
     Parameters
     ----------
-    history      : list of dicts — keys: year_month (YYYY-MM), total_amount,
+    history      : list of dicts with keys:
+                   year_month (YYYY-MM), total_amount,
                    transaction_count (optional), unique_users (optional)
-    target_year  : year of month to predict
-    target_month : month number (1–12) to predict
+    target_year  : year of the month to predict
+    target_month : month number 1–12 to predict
     category     : expense category string
 
     Returns
     -------
-    pd.DataFrame with one row matching FEATURE_COLS order
+    pd.DataFrame — one row, columns matching FEATURE_COLS
     """
     hist_df = pd.DataFrame(history)
     hist_df["date"] = pd.to_datetime(hist_df["year_month"], format="%Y-%m")
@@ -220,7 +193,6 @@ def build_features(
     )
     n = len(amounts)
 
-    # ── Helper lambdas ────────────────────────────────────────────────────────
     def safe_get(arr, idx):
         return float(arr[idx]) if 0 <= idx < len(arr) else 0.0
 
@@ -285,15 +257,13 @@ def build_features(
     row["yoy_pct_change"]  = (prev12 - prev13) / (prev13 + 1e-8)
     row["ratio_to_3m_avg"] = prev1 / (r3 + 1e-8)
 
-    # ── 5. Category global stats — from USER history (not population) ─────────
-    # NOTE: These are intentionally left as user-level stats.
-    #       The scale correction in apply_personal_scale() handles the offset.
-    row["cat_global_mean"]        = float(np.mean(amounts))
-    row["cat_global_median"]      = float(np.median(amounts))
-    row["cat_global_std"]         = float(np.std(amounts))
-    row["cat_global_max"]         = float(np.max(amounts))
-    row["cat_global_min"]         = float(np.min(amounts))
-    row["cat_cv"]                 = float(np.std(amounts) / (np.mean(amounts) + 1e-8))
+    # ── 5. Category global stats ──────────────────────────────────────────────
+    row["cat_global_mean"]         = float(np.mean(amounts))
+    row["cat_global_median"]       = float(np.median(amounts))
+    row["cat_global_std"]          = float(np.std(amounts))
+    row["cat_global_max"]          = float(np.max(amounts))
+    row["cat_global_min"]          = float(np.min(amounts))
+    row["cat_cv"]                  = float(np.std(amounts) / (np.mean(amounts) + 1e-8))
 
     same_month_vals = amounts[
         [i for i in range(n) if hist_df["date"].iloc[i].month == target_month]
@@ -315,9 +285,12 @@ def build_features(
     for cat in sorted(SUPPORTED_CATEGORIES):
         row[f"cat_{cat}"] = int(cat == category)
 
-    # ── Align columns to exact training order ─────────────────────────────────
     return pd.DataFrame([{col: row.get(col, 0.0) for col in FEATURE_COLS}])
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  PREDICTION WITH FULL INPUT + OUTPUT SCALE CORRECTION
+# ══════════════════════════════════════════════════════════════════════════════
 
 def predict_amount(
     features_df: pd.DataFrame,
@@ -325,16 +298,64 @@ def predict_amount(
     category: str,
 ) -> float:
     """
-    Run model prediction, invert log transform, then apply personal
-    scale correction to bring output into the user's actual spending range.
-    """
-    raw = model.predict(features_df)[0]
+    Run model prediction with full input + output scale correction.
 
-    # Invert log transform (applied during training if skewness > 1.0)
+    Why this is needed
+    ──────────────────
+    The model was trained on population-level data where monthly totals
+    were in the 100k–2M range. An individual user's data is 2k–10k.
+    Feeding small numbers into a Random Forest that only knows large
+    numbers produces garbage output (150–200 in our case).
+
+    The fix
+    ───────
+    1. scale_factor = population_mean / user_mean
+       e.g. 929,630 / 6,000 = 154.9  (for utilities)
+
+    2. Multiply all amount-based input features by scale_factor
+       e.g. lag_1m: 5000 → 774,500  (now in model's expected range)
+
+    3. Run model → population-scale prediction
+       e.g. model outputs ~900,000
+
+    4. Divide by scale_factor → personal prediction
+       e.g. 900,000 / 154.9 = 5,810  ✅ realistic for this user
+
+    5. Soft-clamp to 50%–200% of user's observed min/max
+       Prevents extreme outliers on edge months
+    """
+    user_mean       = float(np.mean(user_amounts))
+    population_mean = POPULATION_CATEGORY_MEANS.get(category, 1000000.0)
+    scale_factor    = population_mean / (user_mean + 1e-8)
+
+    logger.info(
+        "  [%s] user_mean=%.0f  pop_mean=%.0f  scale_factor=%.1fx",
+        category, user_mean, population_mean, scale_factor,
+    )
+
+    # ── Step 1: Scale amount-based inputs UP to population range ──────────────
+    scaled_df = features_df.copy()
+    for col in scaled_df.columns:
+        if any(col.startswith(p) or col == p for p in AMOUNT_FEATURE_PREFIXES):
+            scaled_df[col] = scaled_df[col] * scale_factor
+
+    # ── Step 2: Run model on population-scale inputs ──────────────────────────
+    raw             = model.predict(scaled_df)[0]
     population_pred = float(np.expm1(raw)) if USE_LOG else float(max(raw, 0.0))
 
-    # Correct from population scale → user's personal scale
-    return apply_personal_scale(population_pred, user_amounts, category)
+    # ── Step 3: Scale prediction back DOWN to user's personal range ───────────
+    personal_pred = population_pred / scale_factor
+
+    # ── Step 4: Soft-clamp to a sane range around user's history ─────────────
+    lower = float(np.min(user_amounts)) * 0.5
+    upper = float(np.max(user_amounts)) * 2.0
+    final = float(np.clip(personal_pred, lower, upper))
+
+    logger.info(
+        "  [%s] pop_pred=%.0f → personal=%.0f → clamped=%.0f",
+        category, population_pred, personal_pred, final,
+    )
+    return final
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -342,7 +363,7 @@ def predict_amount(
 # ══════════════════════════════════════════════════════════════════════════════
 
 class MonthlyRecord(BaseModel):
-    """One month of expense data for a category."""
+    """One month of aggregated expense data for a category."""
     year_month        : str   = Field(..., example="2024-09",
                                       description="Format: YYYY-MM")
     total_amount      : float = Field(..., ge=0, example=6500.0)
@@ -354,7 +375,7 @@ class MonthlyRecord(BaseModel):
         try:
             datetime.strptime(v, "%Y-%m")
         except ValueError:
-            raise ValueError("year_month must be in YYYY-MM format (e.g. '2024-09')")
+            raise ValueError("year_month must be in YYYY-MM format e.g. '2024-09'")
         return v
 
 
@@ -390,9 +411,11 @@ class BatchPredictRequest(BaseModel):
 
 
 class FuturePredictRequest(BaseModel):
+    """Request body for /predict/future."""
     category     : str
     history      : List[MonthlyRecord]
-    months_ahead : int = Field(default=3, ge=1, le=12)
+    months_ahead : int = Field(default=3, ge=1, le=12,
+                               description="How many future months to predict (1–12)")
 
     @validator("category")
     def validate_category(cls, v):
@@ -410,16 +433,16 @@ app = FastAPI(
     title       = "Smart Expense Tracker — ML Prediction API",
     description = (
         "Predicts monthly expense totals per category using a trained "
-        "Random Forest model with personal scale correction."
+        "Random Forest model with full input+output scale correction (v3)."
     ),
-    version  = "2.0.0",
+    version  = "3.0.0",
     docs_url = "/docs",
     redoc_url= "/redoc",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins     = ["*"],   # Restrict to your domain in production
+    allow_origins     = ["*"],   # Restrict to your actual domain in production
     allow_credentials = True,
     allow_methods     = ["*"],
     allow_headers     = ["*"],
@@ -432,19 +455,21 @@ app.add_middleware(
 
 @app.get("/health", tags=["System"])
 def health_check():
+    """Health check. Java backend should ping this on startup."""
     return {
-        "status"     : "ok",
-        "version"    : "2.0.0 (personal scale correction enabled)",
-        "model"      : "Random Forest",
-        "test_mae"   : cfg.get("test_mae"),
-        "test_r2"    : cfg.get("test_r2"),
-        "categories" : SUPPORTED_CATEGORIES,
-        "timestamp"  : datetime.utcnow().isoformat(),
+        "status"    : "ok",
+        "version"   : "3.0.0 (full input+output scale correction)",
+        "model"     : "Random Forest",
+        "test_mae"  : cfg.get("test_mae"),
+        "test_r2"   : cfg.get("test_r2"),
+        "categories": SUPPORTED_CATEGORIES,
+        "timestamp" : datetime.utcnow().isoformat(),
     }
 
 
 @app.get("/categories", tags=["System"])
 def get_categories():
+    """Return the list of supported expense categories."""
     return {
         "categories"         : SUPPORTED_CATEGORIES,
         "min_history_months" : MIN_HISTORY_MONTHS,
@@ -453,10 +478,11 @@ def get_categories():
 
 @app.get("/model/info", tags=["System"])
 def model_info():
+    """Return model metadata and training configuration."""
     return {
         "model_type"                : "RandomForestRegressor",
-        "version"                   : "2.0.0",
-        "scale_correction"          : "personal (relative % change applied to user baseline)",
+        "version"                   : "3.0.0",
+        "scale_correction"          : "full input + output (v3)",
         "population_category_means" : POPULATION_CATEGORY_MEANS,
         "best_tuning_method"        : cfg.get("best_tuning_method"),
         "best_params"               : cfg.get("best_params"),
@@ -469,21 +495,27 @@ def model_info():
     }
 
 
-@app.post("/predict", response_model=PredictionResult, tags=["Prediction"],
-          summary="Predict next month's expense for one category")
+@app.post(
+    "/predict",
+    response_model = PredictionResult,
+    tags           = ["Prediction"],
+    summary        = "Predict next month's expense for one category",
+)
 def predict(req: PredictRequest):
     """
-    Predict the total expense for one category for a specific month.
-    Automatically applies personal scale correction so predictions
-    match the individual user's spending range.
+    Predict the total monthly expense for a single category.
+    Full input+output scale correction is applied automatically
+    so predictions match the individual user's spending range.
 
-    Request body example:
+    Minimum 12 months of history required.
+
+    Example request:
     {
       "category": "utilities",
       "history": [
         {"year_month": "2024-01", "total_amount": 4500, "transaction_count": 2},
         {"year_month": "2024-02", "total_amount": 3800, "transaction_count": 2},
-        ... (at least 12 months total)
+        ... at least 12 months total, sorted oldest to newest
       ]
     }
     """
@@ -503,7 +535,7 @@ def predict(req: PredictRequest):
         prediction = predict_amount(features, user_amounts, req.category)
 
         target_ym = f"{t_year}-{str(t_month).zfill(2)}"
-        logger.info("Predicted  category=%-15s  period=%s  amount=%.0f",
+        logger.info("✅ Predicted  category=%-15s  period=%s  amount=%.0f",
                     req.category, target_ym, prediction)
 
         return PredictionResult(
@@ -513,7 +545,7 @@ def predict(req: PredictRequest):
             confidence_note   = (
                 f"Based on {len(req.history)} months of personal history. "
                 f"User mean: {float(np.mean(user_amounts)):,.0f}. "
-                f"Personal scale correction applied."
+                f"Full scale correction applied (v3)."
             ),
         )
 
@@ -526,12 +558,16 @@ def predict(req: PredictRequest):
                             detail=f"Prediction failed: {str(e)}")
 
 
-@app.post("/predict/batch", tags=["Prediction"],
-          summary="Predict for multiple categories in one call")
+@app.post(
+    "/predict/batch",
+    tags    = ["Prediction"],
+    summary = "Predict for multiple categories in one call",
+)
 def predict_batch(req: BatchPredictRequest):
     """
     Predict for multiple categories in a single request.
-    Personal scale correction is applied per-category independently.
+    Scale correction is applied per-category independently.
+    Useful for loading the full budget dashboard in React.
     """
     results, errors = [], []
     for single_req in req.predictions:
@@ -549,25 +585,32 @@ def predict_batch(req: BatchPredictRequest):
     }
 
 
-@app.post("/predict/future", tags=["Prediction"],
-          summary="Predict N months into the future for one category")
+@app.post(
+    "/predict/future",
+    tags    = ["Prediction"],
+    summary = "Predict N months into the future for one category",
+)
 def predict_future(req: FuturePredictRequest):
     """
     Rolling forecast for 1–12 future months.
-    Each predicted value is appended to history before predicting the next.
-    Personal scale correction is applied at every step.
+
+    Each predicted value feeds into the next step as a lag feature.
+    Scale correction is anchored to the ORIGINAL user history at every
+    step to prevent the predictions from drifting over time.
+
+    Use this to power a forecast chart in React.
     """
     try:
-        history_dicts   = [h.dict() for h in req.history]
-        rolling_amounts = [h["total_amount"] for h in history_dicts]
-        rolling_counts  = [h.get("transaction_count", 1) for h in history_dicts]
+        history_dicts         = [h.dict() for h in req.history]
+        rolling_amounts       = [h["total_amount"] for h in history_dicts]
+        rolling_counts        = [h.get("transaction_count", 1) for h in history_dicts]
+
+        # Keep original amounts as the scale anchor — never update this
+        original_user_amounts = np.array(rolling_amounts.copy())
 
         last_dt    = datetime.strptime(req.history[-1].year_month, "%Y-%m")
         curr_year  = last_dt.year
         curr_month = last_dt.month
-
-        # Keep original user amounts for scale reference (don't drift with predictions)
-        original_user_amounts = np.array(rolling_amounts.copy())
 
         future_predictions = []
 
@@ -578,7 +621,7 @@ def predict_future(req: FuturePredictRequest):
                 else (curr_year, curr_month + 1)
             )
 
-            # Reconstruct temp history with correct year_month strings
+            # Rebuild temp history with correct year_month strings
             start_dt     = datetime.strptime(req.history[0].year_month, "%Y-%m")
             temp_history = []
             for i, (amt, cnt) in enumerate(zip(rolling_amounts, rolling_counts)):
@@ -591,10 +634,14 @@ def predict_future(req: FuturePredictRequest):
                     "transaction_count": cnt,
                 })
 
-            features   = build_features(temp_history, curr_year, curr_month, req.category)
+            features = build_features(
+                temp_history, curr_year, curr_month, req.category
+            )
 
-            # Always scale against original user amounts — prevents drift
-            prediction = predict_amount(features, original_user_amounts, req.category)
+            # Always scale against ORIGINAL user history — prevents drift
+            prediction = predict_amount(
+                features, original_user_amounts, req.category
+            )
 
             target_ym = f"{curr_year}-{str(curr_month).zfill(2)}"
             future_predictions.append({
@@ -602,10 +649,10 @@ def predict_future(req: FuturePredictRequest):
                 "predicted_amount": round(prediction, 2),
                 "step"            : step + 1,
             })
-            logger.info("Future step %d  category=%-12s  period=%s  amount=%.0f",
+            logger.info("  Future step %d  category=%-12s  period=%s  amount=%.0f",
                         step + 1, req.category, target_ym, prediction)
 
-            # Append predicted value for next step's lag features
+            # Append prediction so next step has it as lag_1m
             rolling_amounts.append(prediction)
             rolling_counts.append(rolling_counts[-1])
 
@@ -615,9 +662,9 @@ def predict_future(req: FuturePredictRequest):
             "months_ahead": req.months_ahead,
             "user_mean"   : round(float(np.mean(original_user_amounts)), 2),
             "note"        : (
-                "Personal scale correction applied at every step. "
-                "Predictions reflect seasonal/trend patterns anchored "
-                "to this user's own spending history."
+                "Full input+output scale correction applied at every step. "
+                "Predictions reflect seasonal patterns anchored to this "
+                "user's own spending history."
             ),
         }
 
@@ -640,5 +687,5 @@ if __name__ == "__main__":
         host    = "0.0.0.0",
         port    = 8000,
         reload  = True,
-        workers = 1,
+        workers = 1,   # Keep at 1 — model is loaded once into memory
     )

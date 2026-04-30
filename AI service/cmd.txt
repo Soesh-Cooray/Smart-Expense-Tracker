@@ -1,5 +1,0 @@
-cd ".\AI service"
-python -m venv {venv_name}
-.\venv311\Scripts\Activate.ps1
-pip install fastapi uvicorn pandas numpy scikit-learn joblib
-uvicorn main:app --reload --port 8000
