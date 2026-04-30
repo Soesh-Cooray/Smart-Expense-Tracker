@@ -54,4 +54,26 @@ public class EmailService {
             log.error("Failed to send password reset email to {}: {}", to, e.getMessage());
         }
     }
+
+    public void sendSavingsGoalReminder(String to, String goalName, double targetAmount, double savedAmount) {
+        if (mailSender == null) {
+            log.warn("Mail sender not configured. Reminder for {}: {}", to, goalName);
+            return;
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("SmartExpense - Reminder: " + goalName + " deadline in 7 days");
+        message.setText("Hi,\n\n" +
+                "This is a reminder that your savings goal '" + goalName + "' is due in 7 days!\n\n" +
+                "Progress: $" + String.format("%.2f", savedAmount) + " / $" + String.format("%.2f", targetAmount) + "\n\n" +
+                "Log in to the app to continue saving.\n\nBest regards,\nSmartExpense Team");
+
+        try {
+            mailSender.send(message);
+            log.info("Savings goal reminder email sent to {}", to);
+        } catch (Exception e) {
+            log.error("Failed to send savings goal reminder to {}: {}", to, e.getMessage());
+        }
+    }
 }
