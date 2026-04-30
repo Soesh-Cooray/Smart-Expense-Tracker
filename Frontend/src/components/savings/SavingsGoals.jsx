@@ -36,6 +36,12 @@ const DEFAULT_FORM = {
   color: '#1d4ed8',
 }
 
+const DEFAULT_TRANSACTION_FORM = {
+  savingsGoalId: '',
+  amount: '',
+  date: new Date().toISOString().slice(0, 10),
+}
+
 function pct(saved, target) {
   if (!target) return 0
   return Math.min(100, Math.round((saved / target) * 100))
@@ -348,43 +354,75 @@ function GoalModal({ editingGoal, onClose, onSave }) {
 
 export default function SavingsGoals() {
   const [goals, setGoals] = useState([])
+  const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [transactionsLoading, setTransactionsLoading] = useState(true)
   const [error, setError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingGoal, setEditingGoal] = useState(null)
   const [userId, setUserId] = useState(null)
+  const [showTransactionForm, setShowTransactionForm] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState(null)
+  const [transactionForm, setTransactionForm] = useState({ ...DEFAULT_TRANSACTION_FORM })
+  const [transactionError, setTransactionError] = useState('')
+  const [transactionSaving, setTransactionSaving] = useState(false)
 
   const fetchGoals = useCallback(async (userIdParam) => {
     try {
       const id = userIdParam || localStorage.getItem('userId')
       if (!id) {
         setError('User ID not found. Please log in again.')
-        return
+        return []
       }
       const res = await fetch(`${API_BASE}/savings-goals/user/${id}`)
       if (!res.ok) throw new Error()
       const goalData = await res.json()
       setGoals(goalData)
       setError('')
+      return goalData
     } catch {
       setError('Could not connect to the server. Make sure the backend is running.')
+      return []
     } finally {
       setLoading(false)
     }
   }, [])
+
+  const fetchTransactions = useCallback(async (userIdParam) => {
+    try {
+      const id = userIdParam || localStorage.getItem('userId')
+      if (!id) {
+        return []
+      }
+      const res = await fetch(`${API_BASE}/savings-transactions/user/${id}`)
+      if (!res.ok) throw new Error()
+      const transactionData = await res.json()
+      setTransactions(transactionData)
+      return transactionData
+    } catch {
+      return []
+    } finally {
+      setTransactionsLoading(false)
+    }
+  }, [])
+
+  const refreshSavingsData = useCallback(async (userIdParam) => {
+    await Promise.all([fetchGoals(userIdParam), fetchTransactions(userIdParam)])
+  }, [fetchGoals, fetchTransactions])
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId')
     if (storedUserId) {
       const parsedUserId = parseInt(storedUserId, 10)
       setUserId(parsedUserId)
-      fetchGoals(parsedUserId)
+      refreshSavingsData(parsedUserId)
     } else {
       setError('User not logged in. Please log in first.')
       setLoading(false)
+      setTransactionsLoading(false)
     }
-  }, [fetchGoals])
+  }, [refreshSavingsData])
 
   async function handleSave(data) {
     try {
@@ -408,7 +446,7 @@ export default function SavingsGoals() {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to save')
       }
-      await fetchGoals(currentUserId)
+      await refreshSavingsData(currentUserId)
       closeModal()
       setError('')
     } catch (err) {
@@ -416,11 +454,116 @@ export default function SavingsGoals() {
     }
   }
 
-  // Transaction handlers - to be implemented when adding transaction UI
-  // function handleTransactionInputChange(e) {}
-  // async function handleAddTransaction(e) {}
-  // function handleEditTransaction(tx) {}
-  // async function handleDeleteTransaction(id) {}
+  function openTransactionAdd() {
+    const defaultGoalId = goals.length > 0 ? String(goals[0].id) : ''
+    setEditingTransaction(null)
+    setTransactionForm({
+      ...DEFAULT_TRANSACTION_FORM,
+      savingsGoalId: defaultGoalId,
+    })
+    setTransactionError('')
+    setShowTransactionForm(true)
+  }
+
+  function handleTransactionChange(e) {
+    const { name, value } = e.target
+    setTransactionForm((prev) => ({ ...prev, [name]: value }))
+    if (transactionError) setTransactionError('')
+  }
+
+  function validateTransactionForm() {
+    const errs = {}
+    if (!transactionForm.savingsGoalId) errs.savingsGoalId = 'Select a savings goal.'
+    if (!transactionForm.amount || Number(transactionForm.amount) <= 0) {
+      errs.amount = 'Enter a valid amount.'
+    }
+    if (!transactionForm.date) errs.date = 'Transaction date is required.'
+    return errs
+  }
+
+  function handleEditTransaction(tx) {
+    setEditingTransaction(tx)
+    setTransactionForm({
+      savingsGoalId: String(tx.savingsGoalId),
+      amount: tx.amount,
+      date: tx.date || new Date().toISOString().slice(0, 10),
+    })
+    setTransactionError('')
+    setShowTransactionForm(true)
+  }
+
+  async function handleTransactionSubmit(e) {
+    e.preventDefault()
+    const errs = validateTransactionForm()
+    if (Object.keys(errs).length) {
+      setTransactionError(Object.values(errs)[0])
+      return
+    }
+
+    try {
+      const currentUserId = userId || localStorage.getItem('userId')
+      if (!currentUserId) {
+        setTransactionError('User ID not found. Please log in again.')
+        return
+      }
+
+      setTransactionSaving(true)
+      const payload = {
+        userId: parseInt(currentUserId, 10),
+        savingsGoalId: parseInt(transactionForm.savingsGoalId, 10),
+        amount: Number(transactionForm.amount),
+        date: transactionForm.date,
+      }
+
+      const url = editingTransaction
+        ? `${API_BASE}/savings-transactions/${editingTransaction.id}`
+        : `${API_BASE}/savings-transactions`
+
+      const res = await fetch(url, {
+        method: editingTransaction ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to save transaction')
+      }
+
+      await refreshSavingsData(currentUserId)
+      setShowTransactionForm(false)
+      setEditingTransaction(null)
+      setTransactionForm({ ...DEFAULT_TRANSACTION_FORM })
+      setTransactionError('')
+    } catch (err) {
+      setTransactionError(err.message)
+    } finally {
+      setTransactionSaving(false)
+    }
+  }
+
+  async function handleDeleteTransaction(id) {
+    try {
+      const currentUserId = userId || localStorage.getItem('userId')
+      if (!currentUserId) {
+        setTransactionError('User ID not found. Please log in again.')
+        return
+      }
+
+      const res = await fetch(`${API_BASE}/savings-transactions/${id}?userId=${currentUserId}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to delete transaction')
+      }
+
+      await refreshSavingsData(currentUserId)
+      setTransactionError('')
+    } catch (err) {
+      setTransactionError(err.message)
+    }
+  }
 
   async function handleDelete(id) {
     try {
@@ -445,6 +588,12 @@ export default function SavingsGoals() {
   function closeModal() {
     setShowModal(false)
     setEditingGoal(null)
+  }
+
+  function closeTransactionForm() {
+    setShowTransactionForm(false)
+    setEditingTransaction(null)
+    setTransactionError('')
   }
 
   const totalSaved = goals.reduce((s, g) => s + g.savedAmount, 0)
@@ -636,6 +785,126 @@ export default function SavingsGoals() {
             </div>
           </section>
         )}
+
+        <section className="sg-transactions-section">
+          <div className="db-card-header" style={{ marginBottom: 16 }}>
+            <h3 className="sg-section-title">Savings Transactions</h3>
+            <button className="db-text-btn" onClick={openTransactionAdd} disabled={!hasGoals}>
+              + Add transaction
+            </button>
+          </div>
+
+          {showTransactionForm && (
+            <div className="db-card" style={{ marginBottom: 16 }}>
+              <div className="db-card-header" style={{ marginBottom: 14 }}>
+                <h3>{editingTransaction ? 'Edit transaction' : 'Add transaction'}</h3>
+                <button className="db-text-btn" type="button" onClick={closeTransactionForm}>
+                  Close
+                </button>
+              </div>
+
+              <form className="sg-transaction-form" onSubmit={handleTransactionSubmit}>
+                <select
+                  name="savingsGoalId"
+                  value={transactionForm.savingsGoalId}
+                  onChange={handleTransactionChange}
+                >
+                  <option value="">Select goal</option>
+                  {goals.map((goal) => (
+                    <option key={goal.id} value={goal.id}>
+                      {goal.icon} {goal.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  name="amount"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  placeholder="Amount"
+                  value={transactionForm.amount}
+                  onChange={handleTransactionChange}
+                />
+                <input
+                  name="date"
+                  type="date"
+                  value={transactionForm.date}
+                  onChange={handleTransactionChange}
+                />
+                <button className="sg-transaction-submit" type="submit" disabled={transactionSaving}>
+                  {transactionSaving ? 'Saving…' : editingTransaction ? 'Update' : 'Add'}
+                </button>
+              </form>
+
+              {transactionError && <div className="sg-alert" style={{ marginTop: 12 }}>{transactionError}</div>}
+            </div>
+          )}
+
+          <div className="db-card">
+            {transactionsLoading ? (
+              <div className="sg-empty" style={{ padding: '40px 24px' }}>
+                <div className="sg-empty-icon">⏳</div>
+                <p>Loading transactions…</p>
+              </div>
+            ) : transactions.length === 0 ? (
+              <div className="sg-empty" style={{ padding: '40px 24px' }}>
+                <div className="sg-empty-icon">💳</div>
+                <h3>No savings transactions yet</h3>
+                <p>Add a transaction to increase the saved amount for a goal.</p>
+                <button className="sg-btn-primary-lg" onClick={openTransactionAdd} disabled={!hasGoals}>
+                  + Add transaction
+                </button>
+              </div>
+            ) : (
+              <div className="sg-transaction-section">
+                <div className="sg-transaction-table-wrap">
+                  <table className="sg-transaction-table">
+                    <thead>
+                      <tr>
+                        <th>Goal</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.map((tx) => {
+                        const goal = goals.find((g) => g.id === tx.savingsGoalId)
+                        return (
+                          <tr key={tx.id}>
+                            <td>
+                              {goal ? `${goal.icon} ${goal.name}` : `Goal #${tx.savingsGoalId}`}
+                            </td>
+                            <td>{formatDate(tx.date)}</td>
+                            <td>{fmtMoney(tx.amount)}</td>
+                            <td>
+                              <div className="sg-transaction-actions">
+                                <button
+                                  className="sg-transaction-action sg-transaction-edit"
+                                  type="button"
+                                  onClick={() => handleEditTransaction(tx)}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  className="sg-transaction-action sg-transaction-delete"
+                                  type="button"
+                                  onClick={() => handleDeleteTransaction(tx.id)}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
 
         <section>
           <div className="db-card-header" style={{ marginBottom: 16 }}>

@@ -1,5 +1,6 @@
 package org.example.smart_expense_tracker.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.example.smart_expense_tracker.Model.SavingsGoal;
 import org.example.smart_expense_tracker.Model.Users;
@@ -26,7 +27,9 @@ public class SavingsReminderScheduler {
         log.info("Starting savings goal reminder check at 9 AM Colombo time...");
         
         try {
-            List<SavingsGoal> goalsDueIn7Days = savingsGoalRepository.findGoalsDueIn7Days();
+            LocalDate today = LocalDate.now();
+            LocalDate endDate = today.plusDays(7);
+            List<SavingsGoal> goalsDueIn7Days = savingsGoalRepository.findGoalsDueWithinDays(today, endDate);
             
             if (goalsDueIn7Days.isEmpty()) {
                 log.info("No savings goals due in 7 days");
@@ -35,7 +38,7 @@ public class SavingsReminderScheduler {
             
             for (SavingsGoal goal : goalsDueIn7Days) {
                 try {
-                    Users user = userRepository.findById(goal.getUserId())
+                    Users user = userRepository.findById(goal.getUserId().intValue())
                         .orElseThrow(() -> new RuntimeException("User not found with ID: " + goal.getUserId()));
                     
                     // username field stores the email address
