@@ -31,8 +31,8 @@ function validate(fields) {
   }
   if (!fields.password) {
     errors.password = 'Password is required.'
-  } else if (fields.password.length < 8) {
-    errors.password = 'Password must be at least 8 characters.'
+  } else if (fields.password.length < 6) {
+    errors.password = 'Password must be at least 6 characters.'
   }
   if (!fields.confirmPassword) {
     errors.confirmPassword = 'Please confirm your password.'
@@ -111,7 +111,7 @@ export default function Signup() {
     const validation = validate(fields)
     const passwordStrength = getPasswordStrength(fields.password)
     if (passwordStrength.score < 4) {
-      validation.password = 'Password must be strong (8+ chars with uppercase, number, and symbol).'
+      validation.password = 'Password must be strong (6+ chars with uppercase, number, and symbol).'
     }
     if (Object.keys(validation).length) { setErrors(validation); return }
     if (!agreedToTerms) { setTermsError('You must agree to the terms to continue.'); return }
@@ -212,7 +212,7 @@ export default function Signup() {
                     className={`auth-input ${errors.password ? 'error' : ''}`}
                     type={showPassword ? 'text' : 'password'}
                     name="password"
-                    placeholder="Min. 8 characters"
+                    placeholder="Min. 6 characters"
                     value={fields.password}
                     onChange={handleChange}
                     autoComplete="new-password"

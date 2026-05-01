@@ -48,7 +48,7 @@ function LeftPanel() {
           </div>
           <div className="auth-feature">
             <span className="auth-feature-icon">🤖</span>
-            <span>AI-powered expense categorization</span>
+            <span>AI-powered expense category predictions</span>
           </div>
         </div>
       </div>
@@ -191,34 +191,10 @@ export default function Login() {
                 {errors.password && <p className="auth-field-error">{errors.password}</p>}
               </div>
 
-              {/* Remember me */}
-              <div className="auth-checkbox-row" style={{ marginBottom: 24 }}>
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <span>
-                  <label htmlFor="remember-me">Keep me signed in for 30 days</label>
-                </span>
-              </div>
-
               <button type="submit" className="auth-submit" disabled={submitting}>
                 {submitting ? 'Signing in…' : 'Sign in'}
               </button>
             </form>
-
-            <div className="auth-divider">
-              <div className="auth-divider-line" />
-              <span>or continue with</span>
-              <div className="auth-divider-line" />
-            </div>
-
-            <button type="button" className="auth-oauth-btn">
-              <span className="auth-oauth-icon">G</span>
-              Continue with Google
-            </button>
           </div>
 
           <p className="auth-switch">

@@ -731,9 +731,6 @@ export default function Dashboard() {
               <p className="db-subtitle">{today}</p>
             </div>
           </div>
-          <div className="db-header-right">
-            <button className="db-icon-btn" type="button" title="Notifications">🔔</button>
-          </div>
         </header>
 
         {!userId && (

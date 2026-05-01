@@ -77,6 +77,10 @@ function fmtMoney(n) {
   return `Rs.${Number(n).toLocaleString()}`
 }
 
+function getTodayInputValue() {
+  return new Date().toISOString().slice(0, 10)
+}
+
 function GoalCard({ goal, onEdit, onDelete }) {
   const [confirming, setConfirming] = useState(false)
   const p = pct(goal.savedAmount, goal.targetAmount)
@@ -171,7 +175,7 @@ function GoalCard({ goal, onEdit, onDelete }) {
 }
 
 function GoalModal({ editingGoal, onClose, onSave }) {
-  const todayDate = new Date().toISOString().slice(0, 10)
+  const todayDate = getTodayInputValue()
   const [form, setForm] = useState(
     editingGoal
       ? {
@@ -353,6 +357,7 @@ function GoalModal({ editingGoal, onClose, onSave }) {
 }
 
 export default function SavingsGoals() {
+  const todayDate = getTodayInputValue()
   const [goals, setGoals] = useState([])
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -478,6 +483,9 @@ export default function SavingsGoals() {
       errs.amount = 'Enter a valid amount.'
     }
     if (!transactionForm.date) errs.date = 'Transaction date is required.'
+    if (transactionForm.date && transactionForm.date > todayDate) {
+      errs.date = 'Future dates are not allowed.'
+    }
     return errs
   }
 
@@ -828,6 +836,7 @@ export default function SavingsGoals() {
                 <input
                   name="date"
                   type="date"
+                  max={todayDate}
                   value={transactionForm.date}
                   onChange={handleTransactionChange}
                 />

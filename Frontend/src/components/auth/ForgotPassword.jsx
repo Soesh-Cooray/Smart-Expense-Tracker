@@ -23,6 +23,10 @@ function getPasswordStrength(pw) {
   return { score, ...map[score] }
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
 function LeftPanel() {
   return (
     <div className="auth-left">
@@ -82,6 +86,10 @@ export default function ForgotPassword() {
       setFormError('Email is required.')
       return
     }
+    if (!isValidEmail(email.trim())) {
+      setFormError('Enter a valid email address.')
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -115,12 +123,12 @@ export default function ForgotPassword() {
       setFormError('Reset code is required.')
       return
     }
-    if (newPassword.length < 8) {
-      setFormError('New password must be at least 8 characters.')
+    if (newPassword.length < 6) {
+      setFormError('New password must be at least 6 characters.')
       return
     }
     if (pwStrength.score < 4) {
-      setFormError('New password must be strong (8+ chars with uppercase, number, and symbol).')
+      setFormError('New password must be strong (6+ chars with uppercase, number, and symbol).')
       return
     }
     if (newPassword !== confirmPassword) {
@@ -221,7 +229,7 @@ export default function ForgotPassword() {
                       className="auth-input"
                       type="password"
                       name="newPassword"
-                      placeholder="Min. 8 characters"
+                      placeholder="Min. 6 characters"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       autoComplete="new-password"
