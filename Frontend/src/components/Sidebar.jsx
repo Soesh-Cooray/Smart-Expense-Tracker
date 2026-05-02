@@ -9,6 +9,7 @@ const navItems = [
   { id: 'ai-analysis', label: 'AI Analysis', icon: '🤖', path: '/ai-analysis' },
   { id: 'budgets',   label: 'Budgets',   icon: '📊',  path: '/budgets' },
   { id: 'goals',     label: 'Goals',     icon: '🎯',  path: '/goals' },
+  { id: 'subscriptions', label: 'Subscriptions', icon: '💳', path: '/subscriptions' },
   { id: 'settings',  label: 'Settings',  icon: '⚙',   path: '/settings' },
 ]
 
