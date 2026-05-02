@@ -57,6 +57,7 @@ const SubscriptionManager = () => {
   const [editingId, setEditingId] = useState(null);
   const [total, setTotal] = useState(0);
   const [userId, setUserId] = useState(null);
+  const [dateError, setDateError] = useState('');
 
   // Get userId from localStorage on mount
   useEffect(() => {
@@ -230,12 +231,21 @@ const SubscriptionManager = () => {
 
   // Handle form input change
   const handleChange = (e) => {
+    if (dateError) {
+      setDateError('');
+    }
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   // Submit form (Add or Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (form.startDate && form.nextPaymentDate && form.nextPaymentDate < form.startDate) {
+      setDateError('Next payment date cannot be earlier than the start date.');
+      return;
+    }
+
     try {
       if (editingId) {
         await axios.put(`${API_BASE}/${editingId}`, {
@@ -258,6 +268,7 @@ const SubscriptionManager = () => {
         nextPaymentDate: "",
         status: "Active",
       });
+      setDateError('');
       fetchSubscriptions();
       fetchTotal();
     } catch (err) {
@@ -303,6 +314,7 @@ const SubscriptionManager = () => {
       status: "Active",
     });
     setEditingId(null);
+    setDateError('');
   };
 
   return (
@@ -393,6 +405,7 @@ const SubscriptionManager = () => {
             type="date"
             placeholder="Next Payment Date"
             value={form.nextPaymentDate}
+            min={form.startDate || undefined}
             onChange={handleChange}
           />
           <select
@@ -408,6 +421,8 @@ const SubscriptionManager = () => {
           <button type="submit" className="submit-btn">
             {editingId ? "✏️ Update Subscription" : "➕ Add Subscription"}
           </button>
+
+          {dateError && <p className="form-error">{dateError}</p>}
         </form>
       </div>
 

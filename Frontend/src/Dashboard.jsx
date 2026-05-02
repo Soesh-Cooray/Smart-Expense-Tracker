@@ -216,7 +216,11 @@ export default function Dashboard() {
   }, [userId])
 
   useEffect(() => {
-    fetchDashboardData()
+    const loadDashboard = async () => {
+      await fetchDashboardData()
+    }
+
+    loadDashboard()
   }, [fetchDashboardData])
 
   const monthlyExpenses = useMemo(() => {
@@ -270,6 +274,21 @@ export default function Dashboard() {
       .reduce((sum, s) => sum + Number(s.amount || 0), 0)
   }, [subscriptions])
 
+  const activeSubscriptionCount = useMemo(
+    () => subscriptions.filter((s) => (s.status || '').toLowerCase() === 'active').length,
+    [subscriptions]
+  )
+
+  const pausedSubscriptionCount = useMemo(
+    () => subscriptions.filter((s) => (s.status || '').toLowerCase() === 'paused').length,
+    [subscriptions]
+  )
+
+  const cancelledSubscriptionCount = useMemo(
+    () => subscriptions.filter((s) => (s.status || '').toLowerCase() === 'cancelled').length,
+    [subscriptions]
+  )
+
   const kpis = [
     {
       label: 'Monthly Income',
@@ -295,7 +314,7 @@ export default function Dashboard() {
     {
       label: 'Active Subscriptions',
       value: formatMoney(totalSubscriptions),
-      change: `${subscriptions.filter((s) => (s.status || '').toLowerCase() === 'active').length} active`,
+      change: `${activeSubscriptionCount} active`,
       positive: false,
       icon: '📱',
     },
@@ -641,6 +660,35 @@ export default function Dashboard() {
               {kpis.map((k) => (
                 <KpiCard key={k.label} kpi={k} />
               ))}
+            </section>
+
+            <section className="db-card db-subscription-summary-card">
+              <div className="db-card-header">
+                <h3>Subscription Summary</h3>
+                <span className="db-card-tag db-card-tag-blue">Monthly recurring</span>
+              </div>
+
+              <div className="db-subscription-summary-body">
+                <div className="db-subscription-summary-main">
+                  <div className="db-subscription-summary-icon">📱</div>
+                  <div>
+                    <p className="db-subscription-summary-label">Current subscription spend</p>
+                    <h2 className="db-subscription-summary-value">{formatMoney(totalSubscriptions)}</h2>
+                    <p className="db-subscription-summary-note">{activeSubscriptionCount} active subscription{activeSubscriptionCount === 1 ? '' : 's'} tracked</p>
+                  </div>
+                </div>
+
+                <div className="db-subscription-summary-stats">
+                  <div className="db-subscription-summary-stat">
+                    <span className="db-subscription-summary-stat-label">Total subscriptions</span>
+                    <strong className="db-subscription-summary-stat-value">{subscriptions.length}</strong>
+                  </div>
+                  <div className="db-subscription-summary-stat">
+                    <span className="db-subscription-summary-stat-label">Paused / cancelled</span>
+                    <strong className="db-subscription-summary-stat-value">{pausedSubscriptionCount + cancelledSubscriptionCount}</strong>
+                  </div>
+                </div>
+              </div>
             </section>
 
             <section className="db-charts-row">
