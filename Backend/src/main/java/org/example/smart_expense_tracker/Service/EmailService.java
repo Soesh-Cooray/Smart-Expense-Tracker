@@ -66,7 +66,7 @@ public class EmailService {
         message.setSubject("SmartExpense - Reminder: " + goalName + " deadline in 7 days");
         message.setText("Hi,\n\n" +
                 "This is a reminder that your savings goal '" + goalName + "' is due in 7 days!\n\n" +
-                "Progress: $" + String.format("%.2f", savedAmount) + " / $" + String.format("%.2f", targetAmount) + "\n\n" +
+                "Progress: Rs" + String.format("%.2f", savedAmount) + " / Rs" + String.format("%.2f", targetAmount) + "\n\n" +
                 "Log in to the app to continue saving.\n\nBest regards,\nSmartExpense Team");
 
         try {

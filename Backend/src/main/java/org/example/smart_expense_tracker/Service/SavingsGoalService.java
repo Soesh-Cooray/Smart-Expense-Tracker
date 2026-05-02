@@ -1,9 +1,11 @@
 package org.example.smart_expense_tracker.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.example.smart_expense_tracker.Controller.SavingsGoalRequest;
 import org.example.smart_expense_tracker.Model.SavingsGoal;
+import org.example.smart_expense_tracker.Repository.Auth;
 import org.example.smart_expense_tracker.Repository.SavingsGoalRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 public class SavingsGoalService {
 
     private final SavingsGoalRepository repository;
+    private final Auth userRepository;
+    private final EmailService emailService;
 
     public List<SavingsGoal> findAll() {
         return repository.findAll();
@@ -38,7 +42,30 @@ public class SavingsGoalService {
         goal.setDueDate(request.getDueDate());
         goal.setIcon(request.getIcon());
         goal.setColor(request.getColor());
-        return repository.save(goal);
+        SavingsGoal saved = repository.save(goal);
+
+        // If the due date is within the next 7 days (inclusive), send an immediate reminder
+        try {
+            LocalDate due = request.getDueDate();
+            if (due != null && !due.isAfter(LocalDate.now().plusDays(7))) {
+                if (userId != null) {
+                    userRepository.findById(userId.intValue()).ifPresent(user -> {
+                        try {
+                            emailService.sendSavingsGoalReminder(
+                                    user.getUsername(),
+                                    saved.getName(),
+                                    saved.getTargetAmount(),
+                                    saved.getSavedAmount());
+                        } catch (Exception e) {
+                            // ignore email failures for create
+                        }
+                    });
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        return saved;
     }
 
     public SavingsGoal update(Long id, SavingsGoalRequest request) {
