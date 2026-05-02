@@ -157,12 +157,15 @@ const SubscriptionManager = () => {
           onChange={handleChange}
           required
         />
-        <input
+        <select
           name="billingCycle"
-          placeholder="Billing Cycle"
           value={form.billingCycle}
           onChange={handleChange}
-        />
+        >
+          <option value="Monthly">Monthly</option>
+          <option value="Yearly">Yearly</option>
+          <option value="Weekly">Weekly</option>
+        </select>
         <input
           name="startDate"
           type="date"

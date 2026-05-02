@@ -173,25 +173,11 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expenseBreakdownRange, setExpenseBreakdownRange] = useState('all')
   const [incomeBreakdownRange, setIncomeBreakdownRange] = useState('all')
-  const [subscriptions, setSubscriptions] = useState([])
   const [expenses, setExpenses] = useState([])
   const [incomes, setIncomes] = useState([])
   const [savingsTransactions, setSavingsTransactions] = useState([])
   const [savingsGoals, setSavingsGoals] = useState([])
-  const [totalSubscriptions, setTotalSubscriptions] = useState(0)
-  const [loadingData, setLoadingData] = useState(false)
-
-  const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    amount: '',
-    billingCycle: 'Monthly',
-    startDate: '',
-    nextPaymentDate: '',
-    status: 'Active',
-  })
+  const [subscriptions, setSubscriptions] = useState([])
   const [userId] = useState(() => {
     const storedUserId = localStorage.getItem('userId')
     return storedUserId ? parseInt(storedUserId, 10) : null
@@ -199,42 +185,33 @@ export default function Dashboard() {
 
   const fetchDashboardData = useCallback(async () => {
     if (!userId) return
-    setLoadingData(true)
     try {
-      const [subsRes, expensesRes, goalsRes, incomesRes, savingsTxRes] = await Promise.all([
-        axios.get(`${API_BASE}/api/subscriptions/user/${userId}`),
+      const [expensesRes, goalsRes, incomesRes, savingsTxRes, subsRes] = await Promise.all([
         axios.get(`${API_BASE}/api/expenses/user/${userId}`),
         axios.get(`${API_BASE}/savings-goals/user/${userId}`),
         axios.get(`${API_BASE}/api/income/user/${userId}`),
         axios.get(`${API_BASE}/savings-transactions/user/${userId}`),
+        axios.get(`${API_BASE}/api/subscriptions/user/${userId}`),
       ])
 
-      const userSubs = Array.isArray(subsRes.data) ? subsRes.data : []
       const userExpenses = Array.isArray(expensesRes.data) ? expensesRes.data : []
       const userGoals = Array.isArray(goalsRes.data) ? goalsRes.data : []
       const userIncomes = Array.isArray(incomesRes.data) ? incomesRes.data : []
       const userSavingsTransactions = Array.isArray(savingsTxRes.data) ? savingsTxRes.data : []
+      const userSubs = Array.isArray(subsRes.data) ? subsRes.data : []
 
-      setSubscriptions(userSubs)
       setExpenses(userExpenses)
       setSavingsGoals(userGoals)
       setIncomes(userIncomes)
       setSavingsTransactions(userSavingsTransactions)
-      setTotalSubscriptions(
-        userSubs
-          .filter((sub) => (sub.status || '').toLowerCase() === 'active')
-          .reduce((sum, sub) => sum + Number(sub.amount || 0), 0)
-      )
+      setSubscriptions(userSubs)
     } catch (error) {
       console.error('Error loading dashboard data:', error)
-      setSubscriptions([])
       setExpenses([])
       setIncomes([])
       setSavingsTransactions([])
       setSavingsGoals([])
-      setTotalSubscriptions(0)
-    } finally {
-      setLoadingData(false)
+      setSubscriptions([])
     }
   }, [userId])
 
@@ -287,6 +264,12 @@ export default function Dashboard() {
     }).length
   }, [incomes])
 
+  const totalSubscriptions = useMemo(() => {
+    return subscriptions
+      .filter((s) => (s.status || '').toLowerCase() === 'active')
+      .reduce((sum, s) => sum + Number(s.amount || 0), 0)
+  }, [subscriptions])
+
   const kpis = [
     {
       label: 'Monthly Income',
@@ -309,7 +292,6 @@ export default function Dashboard() {
       positive: true,
       icon: '🏦',
     },
-    
     {
       label: 'Active Subscriptions',
       value: formatMoney(totalSubscriptions),
@@ -317,7 +299,6 @@ export default function Dashboard() {
       positive: false,
       icon: '📱',
     },
-    
   ]
 
   const expenseBreakdownRecords = useMemo(() => {
@@ -590,92 +571,7 @@ export default function Dashboard() {
     day: 'numeric',
   })
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!userId) {
-      alert('Please log in first.')
-      return
-    }
-
-    try {
-      if (editingId) {
-        await axios.put(`${API_BASE}/api/subscriptions/${editingId}`, {
-          ...formData,
-          userId,
-          amount: parseFloat(formData.amount),
-        })
-      } else {
-        await axios.post(`${API_BASE}/api/subscriptions`, {
-          ...formData,
-          userId,
-          amount: parseFloat(formData.amount),
-        })
-      }
-
-      setFormData({
-        name: '',
-        category: '',
-        amount: '',
-        billingCycle: 'Monthly',
-        startDate: '',
-        nextPaymentDate: '',
-        status: 'Active',
-      })
-      setEditingId(null)
-      setShowForm(false)
-      fetchDashboardData()
-    } catch (error) {
-      console.error('Error saving subscription:', error)
-      alert('Error saving subscription. Please try again.')
-    }
-  }
-
-  const handleEdit = (subscription) => {
-    setFormData({
-      name: subscription.name,
-      category: subscription.category,
-      amount: subscription.amount,
-      billingCycle: subscription.billingCycle,
-      startDate: subscription.startDate,
-      nextPaymentDate: subscription.nextPaymentDate,
-      status: subscription.status,
-    })
-    setEditingId(subscription.id)
-    setShowForm(true)
-  }
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this subscription?')) return
-    try {
-      await axios.delete(`${API_BASE}/api/subscriptions/${id}`)
-      fetchDashboardData()
-    } catch (error) {
-      console.error('Error deleting subscription:', error)
-      alert('Error deleting subscription. Please try again.')
-    }
-  }
-
-  const handleCancel = () => {
-    setFormData({
-      name: '',
-      category: '',
-      amount: '',
-      billingCycle: 'Monthly',
-      startDate: '',
-      nextPaymentDate: '',
-      status: 'Active',
-    })
-    setEditingId(null)
-    setShowForm(false)
-  }
 
   if (activeNav === 'income') {
     return (
@@ -848,109 +744,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="db-card db-budget-card">
-                <div className="db-card-header">
-                  <h3>📱 Active Subscriptions</h3>
-                  <button
-                    className="db-text-btn"
-                    type="button"
-                    onClick={() => {
-                      if (showForm && !editingId) {
-                        setShowForm(false)
-                      } else {
-                        setEditingId(null)
-                        setFormData({
-                          name: '',
-                          category: '',
-                          amount: '',
-                          billingCycle: 'Monthly',
-                          startDate: '',
-                          nextPaymentDate: '',
-                          status: 'Active',
-                        })
-                        setShowForm(true)
-                      }
-                    }}
-                  >
-                    {showForm && !editingId ? '✕ Cancel' : '+ Add Subscription'}
-                  </button>
-                </div>
 
-                {showForm && (
-                  <div className="db-sub-form">
-                    <form onSubmit={handleSubmit}>
-                      <div className="db-form-grid">
-                        <input type="text" name="name" placeholder="Subscription Name" value={formData.name} onChange={handleInputChange} required />
-                        <input type="text" name="category" placeholder="Category" value={formData.category} onChange={handleInputChange} />
-                        <input type="number" name="amount" placeholder="Amount" step="0.01" value={formData.amount} onChange={handleInputChange} required />
-                        <select name="billingCycle" value={formData.billingCycle} onChange={handleInputChange}>
-                          <option value="Monthly">Monthly</option>
-                          <option value="Yearly">Yearly</option>
-                          <option value="Weekly">Weekly</option>
-                        </select>
-                        <input type="date" name="startDate" value={formData.startDate} onChange={handleInputChange} />
-                        <input type="date" name="nextPaymentDate" value={formData.nextPaymentDate} onChange={handleInputChange} />
-                        <select name="status" value={formData.status} onChange={handleInputChange}>
-                          <option value="Active">Active</option>
-                          <option value="Cancelled">Cancelled</option>
-                          <option value="Paused">Paused</option>
-                        </select>
-                      </div>
-                      <div className="db-form-actions">
-                        <button type="submit" className="db-btn-submit">{editingId ? '✏️ Update' : '➕ Add'} Subscription</button>
-                        <button type="button" className="db-btn-cancel" onClick={handleCancel}>Cancel</button>
-                      </div>
-                    </form>
-                  </div>
-                )}
-
-                {loadingData ? (
-                  <div className="db-loading">
-                    <p>⏳ Loading subscriptions...</p>
-                  </div>
-                ) : subscriptions.length > 0 ? (
-                  <>
-                    <div className="db-subscriptions-list">
-                      {subscriptions.map((sub) => (
-                        <div key={sub.id} className="db-subscription-item">
-                          <div className="db-sub-left">
-                            <div className="db-sub-icon">🔔</div>
-                            <div className="db-sub-info">
-                              <p className="db-sub-name">{sub.name}</p>
-                              <div className="db-sub-meta">
-                                <span className="db-sub-category">📂 {sub.category}</span>
-                                <span className="db-sub-status">● {sub.status}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="db-sub-right">
-                            <div className="db-sub-amount">
-                              <p className="db-sub-price">{formatMoney(sub.amount)}</p>
-                              <span className="db-sub-cycle">📅 {sub.billingCycle}</span>
-                            </div>
-                            <div className="db-sub-actions">
-                              <button className="db-sub-btn db-sub-edit" onClick={() => handleEdit(sub)} title="Edit">✏️</button>
-                              <button className="db-sub-btn db-sub-delete" onClick={() => handleDelete(sub.id)} title="Delete">🗑️</button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="db-sub-footer">
-                      <div className="db-sub-summary">
-                        <span>Total {subscriptions.length} Subscriptions</span>
-                        <strong className="db-sub-total-amount">{formatMoney(totalSubscriptions)}</strong>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="db-empty-state">
-                    <p className="db-empty-icon">📭</p>
-                    <p className="db-empty-text">No subscriptions found for this user</p>
-                    <p className="db-empty-hint">Add subscriptions to track recurring expenses</p>
-                  </div>
-                )}
-              </div>
             </section>
 
             <section className="db-bot-row">
